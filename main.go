@@ -17,35 +17,31 @@ func main() {
 		secretKey := ui.NewPasswordEntry()
 		bucket := ui.NewEntry()
 
-		wordVBox := ui.NewVerticalBox()
-		wordVBox.Append(ui.NewLabel("accessKey:"), true)
-		wordVBox.Append(ui.NewLabel("secretKey:"), true)
-		wordVBox.Append(ui.NewLabel("bucket:"), true)
-
-		keyVbox := ui.NewVerticalBox()
-		keyVbox.Append(accessKey, false)
-		keyVbox.Append(secretKey, false)
-		keyVbox.Append(bucket, false)
-
-		loginHBox := ui.NewHorizontalBox()
-		loginHBox.Append(wordVBox, false)
-		loginHBox.Append(keyVbox, false)
-
 		zone := ui.NewCombobox()
 		zone.Append("华东")
 		zone.Append("华北")
 		zone.Append("华南")
 		zone.Append("北美")
 
+		loginForm := ui.NewForm()
+		loginForm.SetPadded(true)
+		loginForm.Append("accessKey", accessKey, false)
+		loginForm.Append("secretKey", secretKey, false)
+		loginForm.Append("bucket", bucket, false)
+		loginForm.Append("zone", zone, false)
+
+		loginGroup := ui.NewGroup("登录信息")
+		loginGroup.SetMargined(true)
+		loginGroup.SetChild(loginForm)
+
 		loginButton := ui.NewButton("登录")
 
 		loginVBox := ui.NewVerticalBox()
-		loginVBox.Append(loginHBox, false)
-		loginVBox.Append(ui.NewLabel("zone:"), false)
-		loginVBox.Append(zone, false)
+		loginVBox.Append(loginGroup, false)
 		loginVBox.Append(loginButton, false)
 
-		login := ui.NewWindow("登录", 200, 0, false)
+		login := ui.NewWindow("登录", 200, 1, false)
+		login.SetMargined(true)
 		login.SetChild(loginVBox)
 
 		window := ui.NewWindow("QiniuDrive", 400, 200, false)
@@ -64,10 +60,13 @@ func main() {
 			marker := ""
 
 			var loginError error
+
 			for {
-				entries, _, nextMarker, hashNext, loginError := bucketManager.ListFiles(bucket.Text(), "", "", marker, 1000)
-				if loginError != nil {
-					fmt.Println("list error,", loginError)
+
+				entries, _, nextMarker, hashNext, err := bucketManager.ListFiles(bucket.Text(), "", "", marker, 1000)
+
+				if err != nil {
+					loginError = err
 					break
 				}
 
@@ -99,6 +98,8 @@ func main() {
 				// client := http.Client{}
 
 				window.Show()
+			} else {
+				ui.MsgBoxError(login, "Warning!", "Wrong user information!")
 			}
 		})
 
