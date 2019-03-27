@@ -190,16 +190,16 @@ func main() {
 
 					for index := 0; index < len(fileNameList); index++ {
 						if fileSelectedList[index].Checked() {
-							go func() {
+							go func(i int) {
 
-								out, err := os.Create(fileNameList[index])
+								out, err := os.Create(fileNameList[i])
 								defer out.Close()
 								if err != nil {
 									ui.MsgBoxError(login, "Error!",
 										err.Error())
 								} else {
 									resp, err := http.Get("http://" + domain.Text() +
-										"/" + fileNameList[index])
+										"/" + fileNameList[i])
 									if err != nil {
 										ui.MsgBoxError(login, "Error!",
 											err.Error())
@@ -212,7 +212,7 @@ func main() {
 									}
 									defer resp.Body.Close()
 								}
-							}()
+							}(index)
 						}
 					}
 				})
