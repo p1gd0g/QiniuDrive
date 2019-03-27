@@ -1,7 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"strconv"
+	"strings"
 
 	"github.com/andlabs/ui"
 	"github.com/qiniu/api.v7/auth"
@@ -44,15 +46,43 @@ func main() {
 		login.SetMargined(true)
 		login.SetChild(loginVBox)
 
-		window := ui.NewWindow("QiniuDrive", 400, 200, false)
+		fileNameVBox := ui.NewVerticalBox()
+		fileSizeVBox := ui.NewVerticalBox()
+		fileSelectedVBox := ui.NewVerticalBox()
+
+		fileHBox := ui.NewHorizontalBox()
+		fileHBox.SetPadded(true)
+		fileHBox.Append(fileNameVBox, false)
+		fileHBox.Append(ui.NewHorizontalSeparator(), false)
+		fileHBox.Append(fileSizeVBox, false)
+		fileHBox.Append(ui.NewHorizontalSeparator(), false)
+		fileHBox.Append(fileSelectedVBox, false)
+
+		fileUp := ui.NewButton("上传文件")
+		fileDn := ui.NewButton("下载文件")
+		fileDl := ui.NewButton("删除文件")
+
+		fileOpHBox := ui.NewHorizontalBox()
+		fileOpHBox.SetPadded(true)
+		fileOpHBox.Append(fileUp, false)
+		fileOpHBox.Append(fileDn, false)
+		fileOpHBox.Append(fileDl, false)
+
+		fileVBox := ui.NewVerticalBox()
+		fileVBox.SetPadded(true)
+		fileVBox.Append(ui.NewLabel("文件信息"), false)
+		fileVBox.Append(ui.NewVerticalSeparator(), false)
+		fileVBox.Append(fileHBox, false)
+		fileVBox.Append(ui.NewVerticalSeparator(), false)
+		fileVBox.Append(fileOpHBox, false)
+
+		window := ui.NewWindow("QiniuDrive", 400, 1, false)
+		window.SetMargined(true)
+		window.SetChild(fileVBox)
 
 		loginButton.OnClicked(func(*ui.Button) {
 
-			putPolicy := storage.PutPolicy{}
-
 			mac := auth.New(accessKey.Text(), secretKey.Text())
-			upToken := putPolicy.UploadToken(mac)
-			fmt.Println(upToken)
 
 			cfg := storage.Config{}
 
@@ -63,7 +93,9 @@ func main() {
 
 			for {
 
-				entries, _, nextMarker, hashNext, err := bucketManager.ListFiles(bucket.Text(), "", "", marker, 1000)
+				entries, _, nextMarker, hashNext, err :=
+					bucketManager.ListFiles(bucket.Text(),
+						"", "", marker, 1000)
 
 				if err != nil {
 					loginError = err
@@ -71,7 +103,12 @@ func main() {
 				}
 
 				for _, entry := range entries {
-					fmt.Println(entry.Key)
+					fileNameVBox.Append(ui.NewLabel(entry.Key), true)
+					fileSizeVBox.Append(
+						ui.NewLabel(
+							strconv.FormatInt(
+								entry.Fsize, 10)), true)
+					fileSelectedVBox.Append(ui.NewCheckbox(""), true)
 				}
 
 				if hashNext {
@@ -95,11 +132,45 @@ func main() {
 					cfg.Zone = &storage.ZoneBeimei
 				}
 
-				// client := http.Client{}
+				fileUp.OnClicked(func(*ui.Button) {
+
+					file := ui.OpenFile(ui.NewWindow("选择文件",
+						300, 300, false))
+					fileName := file[strings.LastIndex(file, "/")+1:]
+
+					putPolicy := storage.PutPolicy{
+						Scope: bucket.Text() + ":" + fileName,
+					}
+					upToken := putPolicy.UploadToken(mac)
+
+					formUploader := storage.NewFormUploader(&cfg)
+					ret := storage.PutRet{}
+
+					err := formUploader.PutFile(context.Background(),
+						&ret, upToken, fileName, file, &storage.PutExtra{})
+
+					if err != nil {
+						ui.MsgBoxError(window, "Error!", err.Error())
+					} else {
+						fileInfo, sErr := bucketManager.Stat(bucket.Text(),
+							fileName)
+						if sErr != nil {
+							ui.MsgBoxError(window, "Error!", sErr.Error())
+						} else {
+							fileNameVBox.Append(ui.NewLabel(fileName), true)
+							fileSizeVBox.Append(
+								ui.NewLabel(
+									strconv.FormatInt(
+										fileInfo.Fsize, 10)), false)
+						}
+
+					}
+
+				})
 
 				window.Show()
 			} else {
-				ui.MsgBoxError(login, "Warning!", "Wrong user information!")
+				ui.MsgBoxError(login, "Error!", loginError.Error())
 			}
 		})
 
