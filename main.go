@@ -187,25 +187,27 @@ func main() {
 				})
 
 				fileDn.OnClicked(func(*ui.Button) {
+
 					for index := 0; index < len(fileNameList); index++ {
 						if fileSelectedList[index].Checked() {
 							go func() {
+
 								out, err := os.Create(fileNameList[index])
 								defer out.Close()
 								if err != nil {
 									ui.MsgBoxError(login, "Error!",
-										loginError.Error())
+										err.Error())
 								} else {
-									resp, err := http.Get(domain.Text() +
+									resp, err := http.Get("http://" + domain.Text() +
 										"/" + fileNameList[index])
 									if err != nil {
 										ui.MsgBoxError(login, "Error!",
-											loginError.Error())
+											err.Error())
 									} else {
 										_, err := io.Copy(out, resp.Body)
 										if err != nil {
 											ui.MsgBoxError(login, "Error!",
-												loginError.Error())
+												err.Error())
 										}
 									}
 									defer resp.Body.Close()
