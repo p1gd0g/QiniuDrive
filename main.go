@@ -198,8 +198,8 @@ func main() {
 									ui.MsgBoxError(login, "Error!",
 										err.Error())
 								} else {
-									resp, err := http.Get("http://" + domain.Text() +
-										"/" + fileNameList[i])
+									resp, err := http.Get("http://" +
+										domain.Text() + "/" + fileNameList[i])
 									if err != nil {
 										ui.MsgBoxError(login, "Error!",
 											err.Error())
