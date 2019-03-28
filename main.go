@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/andlabs/ui"
+	"github.com/p1gd0g/ui"
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
 
@@ -16,6 +17,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
+
 	err := ui.Main(func() {
 
 		accessKey := ui.NewEntry()
@@ -53,7 +56,7 @@ func main() {
 
 		fileNameVBox := ui.NewVerticalBox()
 		fileSizeVBox := ui.NewVerticalBox()
-		fileSelectedVBox := ui.NewVerticalBox()
+		fileCheckboxVBox := ui.NewVerticalBox()
 
 		fileHBox := ui.NewHorizontalBox()
 		fileHBox.SetPadded(true)
@@ -61,17 +64,19 @@ func main() {
 		fileHBox.Append(ui.NewHorizontalSeparator(), false)
 		fileHBox.Append(fileSizeVBox, false)
 		fileHBox.Append(ui.NewHorizontalSeparator(), false)
-		fileHBox.Append(fileSelectedVBox, false)
+		fileHBox.Append(fileCheckboxVBox, false)
 
 		fileUp := ui.NewButton("上传文件")
 		fileDn := ui.NewButton("下载文件")
 		fileDl := ui.NewButton("删除文件")
+		fileRd := ui.NewButton("离线下载")
 
 		fileOpHBox := ui.NewHorizontalBox()
 		fileOpHBox.SetPadded(true)
-		fileOpHBox.Append(fileUp, false)
-		fileOpHBox.Append(fileDn, false)
-		fileOpHBox.Append(fileDl, false)
+		fileOpHBox.Append(fileUp, true)
+		fileOpHBox.Append(fileDn, true)
+		fileOpHBox.Append(fileDl, true)
+		fileOpHBox.Append(fileRd, true)
 
 		fileVBox := ui.NewVerticalBox()
 		fileVBox.SetPadded(true)
@@ -92,45 +97,13 @@ func main() {
 			cfg := storage.Config{}
 
 			bucketManager := storage.NewBucketManager(mac, &cfg)
-			marker := ""
 
-			var loginError error
-			var fileNameList []string
-			var fileSelectedList []ui.Checkbox
+			fileNameList, fileCheckboxList, err :=
+				refresh(bucketManager, bucket.Text(),
+					fileNameVBox, fileSizeVBox, fileCheckboxVBox)
 
-			for {
-
-				entries, _, nextMarker, hashNext, err :=
-					bucketManager.ListFiles(bucket.Text(),
-						"", "", marker, 1000)
-
-				if err != nil {
-					loginError = err
-					break
-				}
-
-				for _, entry := range entries {
-
-					fileNameList = append(fileNameList, entry.Key)
-					fileNameVBox.Append(ui.NewLabel(entry.Key), true)
-					fileSizeVBox.Append(
-						ui.NewLabel(
-							strconv.FormatInt(
-								entry.Fsize, 10)), true)
-					tempCheckbox := ui.NewCheckbox("")
-					fileSelectedList =
-						append(fileSelectedList, *tempCheckbox)
-					fileSelectedVBox.Append(tempCheckbox, true)
-				}
-
-				if hashNext {
-					marker = nextMarker
-				} else {
-					break
-				}
-			}
-
-			if loginError == nil {
+			if err == nil {
+				log.Println("Login successfully.")
 				login.Hide()
 
 				switch zone.Selected() {
@@ -146,8 +119,7 @@ func main() {
 
 				fileUp.OnClicked(func(*ui.Button) {
 
-					file := ui.OpenFile(ui.NewWindow("选择文件",
-						300, 300, false))
+					file := ui.OpenFile(window)
 					fileName := file[strings.LastIndex(file, "/")+1:]
 
 					putPolicy := storage.PutPolicy{
@@ -164,22 +136,35 @@ func main() {
 					if err != nil {
 						ui.MsgBoxError(window, "Error!", err.Error())
 					} else {
+						log.Println("Upload successfully.")
+
 						fileInfo, sErr := bucketManager.Stat(bucket.Text(),
 							fileName)
 						if sErr != nil {
 							ui.MsgBoxError(window, "Error!", sErr.Error())
 						} else {
+							log.Println("Fetch the uploaded file's info successfully.")
+
 							fileNameList = append(fileNameList, fileName)
+							log.Println("File name list increased.")
+
 							fileNameVBox.Append(ui.NewLabel(fileName), true)
+							log.Println("Added the file name.")
+
 							fileSizeVBox.Append(
 								ui.NewLabel(
 									strconv.FormatInt(
 										fileInfo.Fsize, 10)), true)
+							log.Println("Added the file size.")
 
-							tempCheckbox := new(ui.Checkbox)
-							fileSelectedList =
-								append(fileSelectedList, *tempCheckbox)
-							fileSelectedVBox.Append(tempCheckbox, true)
+							tempCheckbox := ui.NewCheckbox("")
+							fileCheckboxList =
+								append(fileCheckboxList, *tempCheckbox)
+							log.Println("File checkbox list increased.")
+
+							fileCheckboxVBox.Append(tempCheckbox, true)
+							log.Println("Added the file checkbox.")
+							log.Println("Added a new row.")
 						}
 
 					}
@@ -189,24 +174,24 @@ func main() {
 				fileDn.OnClicked(func(*ui.Button) {
 
 					for index := 0; index < len(fileNameList); index++ {
-						if fileSelectedList[index].Checked() {
+						if fileCheckboxList[index].Checked() {
 							go func(i int) {
 
 								out, err := os.Create(fileNameList[i])
 								defer out.Close()
 								if err != nil {
-									ui.MsgBoxError(login, "Error!",
+									ui.MsgBoxError(window, "Error!",
 										err.Error())
 								} else {
 									resp, err := http.Get("http://" +
 										domain.Text() + "/" + fileNameList[i])
 									if err != nil {
-										ui.MsgBoxError(login, "Error!",
+										ui.MsgBoxError(window, "Error!",
 											err.Error())
 									} else {
 										_, err := io.Copy(out, resp.Body)
 										if err != nil {
-											ui.MsgBoxError(login, "Error!",
+											ui.MsgBoxError(window, "Error!",
 												err.Error())
 										}
 									}
@@ -217,9 +202,76 @@ func main() {
 					}
 				})
 
+				fileDl.OnClicked(func(*ui.Button) {
+					for index := len(
+						fileNameList) - 1; index >= 0; index-- {
+						if fileCheckboxList[index].Checked() {
+
+							go func(i int) {
+								err := bucketManager.Delete(bucket.Text(),
+									fileNameList[i])
+								if err != nil {
+									ui.MsgBoxError(window, "Error!", err.Error())
+								}
+							}(index)
+
+						}
+					}
+					fileNameList, fileCheckboxList, err =
+						refresh(bucketManager, bucket.Text(),
+							fileNameVBox, fileSizeVBox, fileCheckboxVBox)
+
+					if err != nil {
+						ui.MsgBoxError(window, "Error!", err.Error())
+					}
+				})
+
+				fileRd.OnClicked(func(*ui.Button) {
+
+					url := ui.NewEntry()
+					urlButton := ui.NewButton("确定")
+
+					urlHBox := ui.NewHorizontalBox()
+					urlHBox.SetPadded(true)
+					urlHBox.Append(ui.NewLabel("url"), true)
+					urlHBox.Append(url, true)
+					urlHBox.Append(urlButton, true)
+
+					urlWindow := ui.NewWindow("url", 1, 1, false)
+					urlWindow.SetBorderless(true)
+					urlWindow.SetChild(urlHBox)
+
+					urlButton.OnClicked(func(*ui.Button) {
+						urlWindow.Hide()
+						fileName :=
+							url.Text()[strings.LastIndex(url.Text(), "/")+1:]
+						fetchRet, err :=
+							bucketManager.Fetch(url.Text(),
+								bucket.Text(), fileName)
+
+						if err != nil {
+							ui.MsgBoxError(window, "Error!", err.Error())
+						} else {
+
+							fileNameVBox.Append(ui.NewLabel(fileName), true)
+							fileSizeVBox.Append(
+								ui.NewLabel(
+									strconv.FormatInt(
+										fetchRet.Fsize, 10)), true)
+
+							fileNameList = append(fileNameList, fetchRet.Key)
+							tempCheckbox := ui.NewCheckbox("")
+							fileCheckboxList =
+								append(fileCheckboxList, *tempCheckbox)
+							fileCheckboxVBox.Append(tempCheckbox, true)
+						}
+					})
+					urlWindow.Show()
+				})
+
 				window.Show()
 			} else {
-				ui.MsgBoxError(login, "Error!", loginError.Error())
+				ui.MsgBoxError(login, "Error!", err.Error())
 			}
 		})
 
@@ -238,4 +290,53 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func refresh(bucketManager *storage.BucketManager,
+	bucket string,
+	fileNameVBox *ui.Box,
+	fileSizeVBox *ui.Box,
+	fileCheckboxVBox *ui.Box,
+) (fileNameList []string,
+	fileCheckboxList []ui.Checkbox,
+	err error) {
+
+	fileNameVBox.Clear()
+	fileSizeVBox.Clear()
+	fileCheckboxVBox.Clear()
+
+	marker := ""
+	for {
+
+		entries, _, nextMarker, hashNext, sErr :=
+			bucketManager.ListFiles(bucket,
+				"", "", marker, 1000)
+
+		if sErr != nil {
+			err = sErr
+			break
+		}
+
+		for _, entry := range entries {
+
+			fileNameList = append(fileNameList, entry.Key)
+			fileNameVBox.Append(ui.NewLabel(entry.Key), true)
+			fileSizeVBox.Append(
+				ui.NewLabel(
+					strconv.FormatInt(
+						entry.Fsize, 10)), true)
+			tempCheckbox := ui.NewCheckbox("")
+			fileCheckboxList =
+				append(fileCheckboxList, *tempCheckbox)
+			fileCheckboxVBox.Append(tempCheckbox, true)
+		}
+
+		if hashNext {
+			marker = nextMarker
+		} else {
+			break
+		}
+
+	}
+	return
 }
