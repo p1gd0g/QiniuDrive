@@ -252,12 +252,12 @@ func main() {
 
 					urlHBox := ui.NewHorizontalBox()
 					urlHBox.SetPadded(true)
-					urlHBox.Append(ui.NewLabel("url"), true)
+					urlHBox.Append(ui.NewLabel("url"), false)
 					urlHBox.Append(url, true)
 					urlHBox.Append(urlButton, false)
 
 					urlWindow := ui.NewWindow("url", 1, 1, false)
-					urlWindow.SetBorderless(true)
+					urlWindow.SetMargined(true)
 					urlWindow.SetChild(urlHBox)
 
 					urlButton.OnClicked(func(*ui.Button) {
@@ -285,6 +285,9 @@ func main() {
 								append(fileCheckboxList, *tempCheckbox)
 							fileCheckboxVBox.Append(tempCheckbox, true)
 						}
+					})
+					urlWindow.OnClosing(func(*ui.Window) bool {
+						return true
 					})
 					urlWindow.Show()
 				})
