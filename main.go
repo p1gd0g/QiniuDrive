@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -60,7 +61,7 @@ func main() {
 
 		fileHBox := ui.NewHorizontalBox()
 		fileHBox.SetPadded(true)
-		fileHBox.Append(fileNameVBox, false)
+		fileHBox.Append(fileNameVBox, true)
 		fileHBox.Append(ui.NewHorizontalSeparator(), false)
 		fileHBox.Append(fileSizeVBox, false)
 		fileHBox.Append(ui.NewHorizontalSeparator(), false)
@@ -103,7 +104,7 @@ func main() {
 					fileNameVBox, fileSizeVBox, fileCheckboxVBox)
 
 			if err == nil {
-				log.Println("Login successfully.")
+				log.Println("List file successfully.")
 				login.Hide()
 
 				switch zone.Selected() {
@@ -118,9 +119,15 @@ func main() {
 				}
 
 				fileUp.OnClicked(func(*ui.Button) {
+					log.Println("Button clicked: Upload.")
 
 					file := ui.OpenFile(window)
-					fileName := file[strings.LastIndex(file, "/")+1:]
+					var fileName string
+					if runtime.GOOS == "windows" {
+						fileName = file[strings.LastIndex(file, "\\")+1:]
+					} else {
+						fileName = file[strings.LastIndex(file, "/")+1:]
+					}
 
 					putPolicy := storage.PutPolicy{
 						Scope: bucket.Text() + ":" + fileName,
@@ -172,6 +179,7 @@ func main() {
 				})
 
 				fileDn.OnClicked(func(*ui.Button) {
+					log.Println("Button clicked: Download.")
 
 					for index := 0; index < len(fileNameList); index++ {
 						if fileCheckboxList[index].Checked() {
@@ -193,6 +201,9 @@ func main() {
 										if err != nil {
 											ui.MsgBoxError(window, "Error!",
 												err.Error())
+										} else {
+											log.Println("Download",
+												fileNameList[i], "successfully.")
 										}
 									}
 									defer resp.Body.Close()
@@ -203,20 +214,27 @@ func main() {
 				})
 
 				fileDl.OnClicked(func(*ui.Button) {
-					for index := len(
-						fileNameList) - 1; index >= 0; index-- {
-						if fileCheckboxList[index].Checked() {
+					log.Println("Button clicked: Delete.")
 
-							go func(i int) {
-								err := bucketManager.Delete(bucket.Text(),
+					for index := 0; index < len(fileNameList); index++ {
+						if fileCheckboxList[index].Checked() {
+							log.Println("To be deleted:", fileNameList[index])
+
+							func(i int) {
+								err = bucketManager.Delete(bucket.Text(),
 									fileNameList[i])
+
 								if err != nil {
 									ui.MsgBoxError(window, "Error!", err.Error())
+								} else {
+									log.Println("Delete one file successfully.")
 								}
 							}(index)
-
 						}
 					}
+
+					log.Println("All selected files deleted.")
+
 					fileNameList, fileCheckboxList, err =
 						refresh(bucketManager, bucket.Text(),
 							fileNameVBox, fileSizeVBox, fileCheckboxVBox)
@@ -227,6 +245,7 @@ func main() {
 				})
 
 				fileRd.OnClicked(func(*ui.Button) {
+					log.Println("Button clicked: Remote download.")
 
 					url := ui.NewEntry()
 					urlButton := ui.NewButton("确定")
@@ -235,7 +254,7 @@ func main() {
 					urlHBox.SetPadded(true)
 					urlHBox.Append(ui.NewLabel("url"), true)
 					urlHBox.Append(url, true)
-					urlHBox.Append(urlButton, true)
+					urlHBox.Append(urlButton, false)
 
 					urlWindow := ui.NewWindow("url", 1, 1, false)
 					urlWindow.SetBorderless(true)
@@ -252,6 +271,7 @@ func main() {
 						if err != nil {
 							ui.MsgBoxError(window, "Error!", err.Error())
 						} else {
+							log.Println("Remote download successfully.")
 
 							fileNameVBox.Append(ui.NewLabel(fileName), true)
 							fileSizeVBox.Append(
@@ -315,6 +335,8 @@ func refresh(bucketManager *storage.BucketManager,
 		if sErr != nil {
 			err = sErr
 			break
+		} else {
+			log.Println("Fetch file info successfully.")
 		}
 
 		for _, entry := range entries {
