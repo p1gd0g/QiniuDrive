@@ -114,12 +114,16 @@ func main() {
 				switch zone.Selected() {
 				case 0:
 					cfg.Zone = &storage.ZoneHuadong
+					log.Println("Zone: Huadong.")
 				case 1:
 					cfg.Zone = &storage.ZoneHuabei
+					log.Println("Zone: Huabei.")
 				case 2:
 					cfg.Zone = &storage.ZoneHuanan
+					log.Println("Zone: Huanan.")
 				case 3:
 					cfg.Zone = &storage.ZoneBeimei
+					log.Println("Zone: Beimei.")
 				}
 
 				fileUp.OnClicked(func(*ui.Button) {
