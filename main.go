@@ -90,7 +90,7 @@ func main() {
 		fileVBox.Append(ui.NewVerticalSeparator(), false)
 		fileVBox.Append(fileOpHBox, false)
 
-		window := ui.NewWindow("QiniuDrive", 400, 1, false)
+		window := ui.NewWindow("QiniuDrive", 400, 600, false)
 		window.SetMargined(true)
 		window.SetChild(fileVBox)
 
