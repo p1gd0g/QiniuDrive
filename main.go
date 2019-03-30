@@ -56,12 +56,15 @@ func main() {
 		login.SetChild(loginVBox)
 
 		fileNameVBox := ui.NewVerticalBox()
+		fileMTypeVBox := ui.NewVerticalBox()
 		fileSizeVBox := ui.NewVerticalBox()
 		fileCheckboxVBox := ui.NewVerticalBox()
 
 		fileHBox := ui.NewHorizontalBox()
 		fileHBox.SetPadded(true)
 		fileHBox.Append(fileNameVBox, true)
+		fileHBox.Append(ui.NewHorizontalSeparator(), false)
+		fileHBox.Append(fileMTypeVBox, false)
 		fileHBox.Append(ui.NewHorizontalSeparator(), false)
 		fileHBox.Append(fileSizeVBox, false)
 		fileHBox.Append(ui.NewHorizontalSeparator(), false)
@@ -101,7 +104,8 @@ func main() {
 
 			fileNameList, fileCheckboxList, err :=
 				refresh(bucketManager, bucket.Text(),
-					fileNameVBox, fileSizeVBox, fileCheckboxVBox)
+					fileNameVBox, fileSizeVBox, fileMTypeVBox,
+					fileCheckboxVBox)
 
 			if err == nil {
 				log.Println("List file successfully.")
@@ -157,6 +161,10 @@ func main() {
 
 							fileNameVBox.Append(ui.NewLabel(fileName), true)
 							log.Println("Added the file name.")
+
+							fileMTypeVBox.Append(
+								ui.NewLabel(fileInfo.MimeType), true)
+							log.Println("Added the file mime type.")
 
 							fileSizeVBox.Append(
 								ui.NewLabel(formatSize(fileInfo.Fsize)), true)
@@ -235,7 +243,8 @@ func main() {
 
 					fileNameList, fileCheckboxList, err =
 						refresh(bucketManager, bucket.Text(),
-							fileNameVBox, fileSizeVBox, fileCheckboxVBox)
+							fileNameVBox, fileSizeVBox, fileMTypeVBox,
+							fileCheckboxVBox)
 
 					if err != nil {
 						ui.MsgBoxError(window, "Error!", err.Error())
@@ -314,11 +323,13 @@ func main() {
 func refresh(bucketManager *storage.BucketManager,
 	bucket string,
 	fileNameVBox *ui.Box,
+	fileMTypeVBox *ui.Box,
 	fileSizeVBox *ui.Box,
 	fileCheckboxVBox *ui.Box,
 ) (fileNameList []string,
 	fileCheckboxList []ui.Checkbox,
 	err error) {
+	log.Println("Refreshing the file list.")
 
 	fileNameVBox.Clear()
 	fileSizeVBox.Clear()
@@ -342,6 +353,7 @@ func refresh(bucketManager *storage.BucketManager,
 
 			fileNameList = append(fileNameList, entry.Key)
 			fileNameVBox.Append(ui.NewLabel(entry.Key), true)
+			fileMTypeVBox.Append(ui.NewLabel(entry.MimeType), true)
 			fileSizeVBox.Append(
 				ui.NewLabel(formatSize(entry.Fsize)), true)
 			tempCheckbox := ui.NewCheckbox("")
@@ -357,6 +369,7 @@ func refresh(bucketManager *storage.BucketManager,
 		}
 
 	}
+	log.Println("Refreshed the file list.")
 	return
 }
 
