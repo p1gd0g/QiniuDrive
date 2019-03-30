@@ -159,9 +159,7 @@ func main() {
 							log.Println("Added the file name.")
 
 							fileSizeVBox.Append(
-								ui.NewLabel(
-									strconv.FormatInt(
-										fileInfo.Fsize, 10)), true)
+								ui.NewLabel(formatSize(fileInfo.Fsize)), true)
 							log.Println("Added the file size.")
 
 							tempCheckbox := ui.NewCheckbox("")
@@ -275,9 +273,7 @@ func main() {
 
 							fileNameVBox.Append(ui.NewLabel(fileName), true)
 							fileSizeVBox.Append(
-								ui.NewLabel(
-									strconv.FormatInt(
-										fetchRet.Fsize, 10)), true)
+								ui.NewLabel(formatSize(fetchRet.Fsize)), true)
 
 							fileNameList = append(fileNameList, fetchRet.Key)
 							tempCheckbox := ui.NewCheckbox("")
@@ -347,9 +343,7 @@ func refresh(bucketManager *storage.BucketManager,
 			fileNameList = append(fileNameList, entry.Key)
 			fileNameVBox.Append(ui.NewLabel(entry.Key), true)
 			fileSizeVBox.Append(
-				ui.NewLabel(
-					strconv.FormatInt(
-						entry.Fsize, 10)), true)
+				ui.NewLabel(formatSize(entry.Fsize)), true)
 			tempCheckbox := ui.NewCheckbox("")
 			fileCheckboxList =
 				append(fileCheckboxList, *tempCheckbox)
@@ -364,4 +358,23 @@ func refresh(bucketManager *storage.BucketManager,
 
 	}
 	return
+}
+
+func formatSize(n int64) string {
+	if n < 1024 {
+		return strconv.FormatInt(n, 10) + " B"
+	}
+
+	n /= 1024
+	if n < 1024 {
+		return strconv.FormatInt(n, 10) + " KB"
+	}
+
+	n /= 1024
+	if n < 1024 {
+		return strconv.FormatInt(n, 10) + " MB"
+	}
+
+	n /= 1024
+	return strconv.FormatInt(n, 10) + " GB"
 }
