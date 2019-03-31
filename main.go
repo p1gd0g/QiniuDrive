@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/p1gd0g/QiniuDrive/gui"
 	"github.com/p1gd0g/ui"
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
@@ -33,11 +34,7 @@ func login() {
 	bucket := ui.NewEntry()
 	domain := ui.NewEntry()
 
-	zone := ui.NewCombobox()
-	zone.Append("华东")
-	zone.Append("华北")
-	zone.Append("华南")
-	zone.Append("北美")
+	zone := gui.NewCombobox("华东", "华北", "华南", "北美")
 
 	loginForm := ui.NewForm()
 	loginForm.SetPadded(true)
