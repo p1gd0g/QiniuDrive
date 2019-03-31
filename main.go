@@ -103,13 +103,18 @@ func login() {
 	window.SetChild(fileVBox)
 
 	loginButton.OnClicked(func(*ui.Button) {
+		log.Println("accessKey:", accessKey.Text())
+		log.Println("secretKey:", secretKey.Text())
 
 		mac := auth.New(accessKey.Text(), secretKey.Text())
+		log.Println("mac created.")
 
 		cfg := storage.Config{}
 
 		bucketManager := storage.NewBucketManager(mac, &cfg)
+		log.Println("bucketManager created.")
 
+		log.Println("Listing files.")
 		fileNameList, fileCheckboxList, err :=
 			refresh(bucketManager, bucket.Text(),
 				fileNameVBox, fileMTypeVBox, fileSizeVBox,
@@ -132,6 +137,8 @@ func login() {
 			case 3:
 				cfg.Zone = &storage.ZoneBeimei
 				log.Println("Zone: Beimei.")
+			default:
+				log.Println("No zone!")
 			}
 
 			fileUp.OnClicked(func(*ui.Button) {
@@ -398,16 +405,18 @@ func formatSize(n int64) string {
 		return strconv.FormatInt(n, 10) + " B"
 	}
 
-	n /= 1024
-	if n < 1024 {
-		return strconv.FormatInt(n, 10) + " KB"
+	nf := float64(n)
+
+	nf /= 1024
+	if nf < 1024 {
+		return strconv.FormatFloat(nf, 'f', 2, 64) + " KB"
 	}
 
-	n /= 1024
-	if n < 1024 {
-		return strconv.FormatInt(n, 10) + " MB"
+	nf /= 1024
+	if nf < 1024 {
+		return strconv.FormatFloat(nf, 'f', 2, 64) + " MB"
 	}
 
-	n /= 1024
-	return strconv.FormatInt(n, 10) + " GB"
+	nf /= 1024
+	return strconv.FormatFloat(nf, 'f', 2, 64) + " GB"
 }
