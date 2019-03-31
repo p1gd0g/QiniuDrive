@@ -418,5 +418,10 @@ func formatSize(n int64) string {
 	}
 
 	nf /= 1024
-	return strconv.FormatFloat(nf, 'f', 2, 64) + " GB"
+	if nf < 1024 {
+		return strconv.FormatFloat(nf, 'f', 2, 64) + " GB"
+	}
+
+	nf /= 1024
+	return strconv.FormatFloat(nf, 'f', 2, 64) + " TB"
 }
