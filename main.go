@@ -20,322 +20,338 @@ import (
 func main() {
 	log.SetFlags(log.Lshortfile)
 
-	err := ui.Main(func() {
-
-		accessKey := ui.NewEntry()
-		secretKey := ui.NewPasswordEntry()
-		bucket := ui.NewEntry()
-		domain := ui.NewEntry()
-
-		zone := ui.NewCombobox()
-		zone.Append("华东")
-		zone.Append("华北")
-		zone.Append("华南")
-		zone.Append("北美")
-
-		loginForm := ui.NewForm()
-		loginForm.SetPadded(true)
-		loginForm.Append("accessKey", accessKey, false)
-		loginForm.Append("secretKey", secretKey, false)
-		loginForm.Append("bucket", bucket, false)
-		loginForm.Append("domain", domain, false)
-		loginForm.Append("zone", zone, false)
-
-		loginGroup := ui.NewGroup("登录信息")
-		loginGroup.SetMargined(true)
-		loginGroup.SetChild(loginForm)
-
-		loginButton := ui.NewButton("登录")
-
-		loginVBox := ui.NewVerticalBox()
-		loginVBox.Append(loginGroup, false)
-		loginVBox.Append(loginButton, false)
-
-		login := ui.NewWindow("登录", 200, 1, false)
-		login.SetMargined(true)
-		login.SetChild(loginVBox)
-
-		fileNameVBox := ui.NewVerticalBox()
-		fileMTypeVBox := ui.NewVerticalBox()
-		fileSizeVBox := ui.NewVerticalBox()
-		fileCheckboxVBox := ui.NewVerticalBox()
-
-		fileHBox := ui.NewHorizontalBox()
-		fileHBox.SetPadded(true)
-		fileHBox.Append(fileNameVBox, true)
-		fileHBox.Append(ui.NewHorizontalSeparator(), false)
-		fileHBox.Append(fileMTypeVBox, false)
-		fileHBox.Append(ui.NewHorizontalSeparator(), false)
-		fileHBox.Append(fileSizeVBox, false)
-		fileHBox.Append(ui.NewHorizontalSeparator(), false)
-		fileHBox.Append(fileCheckboxVBox, false)
-
-		fileUp := ui.NewButton("上传文件")
-		fileDn := ui.NewButton("下载文件")
-		fileDl := ui.NewButton("删除文件")
-		fileRd := ui.NewButton("离线下载")
-
-		fileOpHBox := ui.NewHorizontalBox()
-		fileOpHBox.SetPadded(true)
-		fileOpHBox.Append(fileUp, true)
-		fileOpHBox.Append(fileDn, true)
-		fileOpHBox.Append(fileDl, true)
-		fileOpHBox.Append(fileRd, true)
-
-		fileVBox := ui.NewVerticalBox()
-		fileVBox.SetPadded(true)
-		fileVBox.Append(ui.NewLabel("文件信息"), false)
-		fileVBox.Append(ui.NewVerticalSeparator(), false)
-		fileVBox.Append(fileHBox, false)
-		fileVBox.Append(ui.NewVerticalSeparator(), false)
-		fileVBox.Append(fileOpHBox, false)
-
-		window := ui.NewWindow("QiniuDrive", 400, 600, false)
-		window.SetMargined(true)
-		window.SetChild(fileVBox)
-
-		loginButton.OnClicked(func(*ui.Button) {
-
-			mac := auth.New(accessKey.Text(), secretKey.Text())
-
-			cfg := storage.Config{}
-
-			bucketManager := storage.NewBucketManager(mac, &cfg)
-
-			fileNameList, fileCheckboxList, err :=
-				refresh(bucketManager, bucket.Text(),
-					fileNameVBox, fileSizeVBox, fileMTypeVBox,
-					fileCheckboxVBox)
-
-			if err == nil {
-				log.Println("List file successfully.")
-				login.Hide()
-
-				switch zone.Selected() {
-				case 0:
-					cfg.Zone = &storage.ZoneHuadong
-					log.Println("Zone: Huadong.")
-				case 1:
-					cfg.Zone = &storage.ZoneHuabei
-					log.Println("Zone: Huabei.")
-				case 2:
-					cfg.Zone = &storage.ZoneHuanan
-					log.Println("Zone: Huanan.")
-				case 3:
-					cfg.Zone = &storage.ZoneBeimei
-					log.Println("Zone: Beimei.")
-				}
-
-				fileUp.OnClicked(func(*ui.Button) {
-					log.Println("Button clicked: Upload.")
-
-					file := ui.OpenFile(window)
-					var fileName string
-					if runtime.GOOS == "windows" {
-						fileName = file[strings.LastIndex(file, "\\")+1:]
-					} else {
-						fileName = file[strings.LastIndex(file, "/")+1:]
-					}
-
-					putPolicy := storage.PutPolicy{
-						Scope: bucket.Text() + ":" + fileName,
-					}
-					upToken := putPolicy.UploadToken(mac)
-
-					formUploader := storage.NewFormUploader(&cfg)
-					ret := storage.PutRet{}
-
-					err := formUploader.PutFile(context.Background(),
-						&ret, upToken, fileName, file, &storage.PutExtra{})
-
-					if err != nil {
-						ui.MsgBoxError(window, "Error!", err.Error())
-					} else {
-						log.Println("Upload successfully.")
-
-						fileInfo, sErr := bucketManager.Stat(bucket.Text(),
-							fileName)
-						if sErr != nil {
-							ui.MsgBoxError(window, "Error!", sErr.Error())
-						} else {
-							log.Println("Fetch the uploaded file's info successfully.")
-
-							fileNameList = append(fileNameList, fileName)
-							log.Println("File name list increased.")
-
-							fileNameVBox.Append(ui.NewLabel(fileName), true)
-							log.Println("Added the file name.")
-
-							fileMTypeVBox.Append(
-								ui.NewLabel(fileInfo.MimeType), true)
-							log.Println("Added the file mime type.")
-
-							fileSizeVBox.Append(
-								ui.NewLabel(formatSize(fileInfo.Fsize)), true)
-							log.Println("Added the file size.")
-
-							tempCheckbox := ui.NewCheckbox("")
-							fileCheckboxList =
-								append(fileCheckboxList, *tempCheckbox)
-							log.Println("File checkbox list increased.")
-
-							fileCheckboxVBox.Append(tempCheckbox, true)
-							log.Println("Added the file checkbox.")
-							log.Println("Added a new row.")
-						}
-
-					}
-
-				})
-
-				fileDn.OnClicked(func(*ui.Button) {
-					log.Println("Button clicked: Download.")
-
-					for index := 0; index < len(fileNameList); index++ {
-						if fileCheckboxList[index].Checked() {
-							go func(i int) {
-
-								out, err := os.Create(fileNameList[i])
-								defer out.Close()
-								if err != nil {
-									ui.MsgBoxError(window, "Error!",
-										err.Error())
-								} else {
-									resp, err := http.Get("http://" +
-										domain.Text() + "/" + fileNameList[i])
-									if err != nil {
-										ui.MsgBoxError(window, "Error!",
-											err.Error())
-									} else {
-										_, err := io.Copy(out, resp.Body)
-										if err != nil {
-											ui.MsgBoxError(window, "Error!",
-												err.Error())
-										} else {
-											log.Println("Download",
-												fileNameList[i], "successfully.")
-										}
-									}
-									defer resp.Body.Close()
-								}
-							}(index)
-						}
-					}
-				})
-
-				fileDl.OnClicked(func(*ui.Button) {
-					log.Println("Button clicked: Delete.")
-
-					for index := 0; index < len(fileNameList); index++ {
-						if fileCheckboxList[index].Checked() {
-							log.Println("To be deleted:", fileNameList[index])
-
-							func(i int) {
-								err = bucketManager.Delete(bucket.Text(),
-									fileNameList[i])
-
-								if err != nil {
-									ui.MsgBoxError(window, "Error!", err.Error())
-								} else {
-									log.Println("Delete one file successfully.")
-								}
-							}(index)
-						}
-					}
-
-					log.Println("All selected files deleted.")
-
-					fileNameList, fileCheckboxList, err =
-						refresh(bucketManager, bucket.Text(),
-							fileNameVBox, fileSizeVBox, fileMTypeVBox,
-							fileCheckboxVBox)
-
-					if err != nil {
-						ui.MsgBoxError(window, "Error!", err.Error())
-					}
-				})
-
-				fileRd.OnClicked(func(*ui.Button) {
-					log.Println("Button clicked: Remote download.")
-
-					url := ui.NewEntry()
-					urlButton := ui.NewButton("确定")
-
-					urlHBox := ui.NewHorizontalBox()
-					urlHBox.SetPadded(true)
-					urlHBox.Append(ui.NewLabel("url"), false)
-					urlHBox.Append(url, true)
-					urlHBox.Append(urlButton, false)
-
-					urlWindow := ui.NewWindow("url", 1, 1, false)
-					urlWindow.SetMargined(true)
-					urlWindow.SetChild(urlHBox)
-
-					urlButton.OnClicked(func(*ui.Button) {
-						urlWindow.Hide()
-						fileName :=
-							url.Text()[strings.LastIndex(url.Text(), "/")+1:]
-						fetchRet, err :=
-							bucketManager.Fetch(url.Text(),
-								bucket.Text(), fileName)
-
-						if err != nil {
-							ui.MsgBoxError(window, "Error!", err.Error())
-						} else {
-							log.Println("Remote download successfully.")
-
-							fileNameVBox.Append(ui.NewLabel(fileName), true)
-							fileSizeVBox.Append(
-								ui.NewLabel(formatSize(fetchRet.Fsize)), true)
-
-							fileNameList = append(fileNameList, fetchRet.Key)
-							tempCheckbox := ui.NewCheckbox("")
-							fileCheckboxList =
-								append(fileCheckboxList, *tempCheckbox)
-							fileCheckboxVBox.Append(tempCheckbox, true)
-						}
-					})
-					urlWindow.OnClosing(func(*ui.Window) bool {
-						return true
-					})
-					urlWindow.Show()
-				})
-
-				window.Show()
-			} else {
-				ui.MsgBoxError(login, "Error!", err.Error())
-			}
-		})
-
-		login.OnClosing(func(*ui.Window) bool {
-			ui.Quit()
-			return true
-		})
-
-		window.OnClosing(func(*ui.Window) bool {
-			ui.Quit()
-			return true
-		})
-
-		login.Show()
-	})
+	err := ui.Main(login)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func refresh(bucketManager *storage.BucketManager,
+func login() {
+
+	accessKey := ui.NewEntry()
+	secretKey := ui.NewPasswordEntry()
+	bucket := ui.NewEntry()
+	domain := ui.NewEntry()
+
+	zone := ui.NewCombobox()
+	zone.Append("华东")
+	zone.Append("华北")
+	zone.Append("华南")
+	zone.Append("北美")
+
+	loginForm := ui.NewForm()
+	loginForm.SetPadded(true)
+	loginForm.Append("accessKey", accessKey, false)
+	loginForm.Append("secretKey", secretKey, false)
+	loginForm.Append("bucket", bucket, false)
+	loginForm.Append("domain", domain, false)
+	loginForm.Append("zone", zone, false)
+
+	loginGroup := ui.NewGroup("登录信息")
+	loginGroup.SetMargined(true)
+	loginGroup.SetChild(loginForm)
+
+	loginButton := ui.NewButton("登录")
+
+	loginVBox := ui.NewVerticalBox()
+	loginVBox.SetPadded(true)
+	loginVBox.Append(loginGroup, false)
+	loginVBox.Append(loginButton, false)
+
+	login := ui.NewWindow("登录", 200, 1, false)
+	login.SetMargined(true)
+	login.SetChild(loginVBox)
+
+	fileNameVBox := ui.NewVerticalBox()
+	fileMTypeVBox := ui.NewVerticalBox()
+	fileSizeVBox := ui.NewVerticalBox()
+	fileCheckboxVBox := ui.NewVerticalBox()
+
+	fileHBox := ui.NewHorizontalBox()
+	fileHBox.SetPadded(true)
+	fileHBox.Append(fileNameVBox, true)
+	fileHBox.Append(ui.NewHorizontalSeparator(), false)
+	fileHBox.Append(fileMTypeVBox, false)
+	fileHBox.Append(ui.NewHorizontalSeparator(), false)
+	fileHBox.Append(fileSizeVBox, false)
+	fileHBox.Append(ui.NewHorizontalSeparator(), false)
+	fileHBox.Append(fileCheckboxVBox, false)
+
+	fileUp := ui.NewButton("上传文件")
+	fileDn := ui.NewButton("下载文件")
+	fileDl := ui.NewButton("删除文件")
+	fileRd := ui.NewButton("离线下载")
+
+	fileOpHBox := ui.NewHorizontalBox()
+	fileOpHBox.SetPadded(true)
+	fileOpHBox.Append(fileUp, true)
+	fileOpHBox.Append(fileDn, true)
+	fileOpHBox.Append(fileDl, true)
+	fileOpHBox.Append(fileRd, true)
+
+	fileVBox := ui.NewVerticalBox()
+	fileVBox.SetPadded(true)
+	fileVBox.Append(ui.NewLabel("文件信息"), false)
+	fileVBox.Append(ui.NewVerticalSeparator(), false)
+	fileVBox.Append(fileHBox, false)
+	fileVBox.Append(ui.NewHorizontalBox(), true)
+	fileVBox.Append(ui.NewVerticalSeparator(), false)
+	fileVBox.Append(fileOpHBox, false)
+
+	window := ui.NewWindow("QiniuDrive", 600, 600, false)
+	window.SetMargined(true)
+	window.SetChild(fileVBox)
+
+	loginButton.OnClicked(func(*ui.Button) {
+
+		mac := auth.New(accessKey.Text(), secretKey.Text())
+
+		cfg := storage.Config{}
+
+		bucketManager := storage.NewBucketManager(mac, &cfg)
+
+		fileNameList, fileCheckboxList, err :=
+			refresh(bucketManager, bucket.Text(),
+				fileNameVBox, fileMTypeVBox, fileSizeVBox,
+				fileCheckboxVBox)
+
+		if err == nil {
+			log.Println("List files successfully.")
+			login.Hide()
+
+			switch zone.Selected() {
+			case 0:
+				cfg.Zone = &storage.ZoneHuadong
+				log.Println("Zone: Huadong.")
+			case 1:
+				cfg.Zone = &storage.ZoneHuabei
+				log.Println("Zone: Huabei.")
+			case 2:
+				cfg.Zone = &storage.ZoneHuanan
+				log.Println("Zone: Huanan.")
+			case 3:
+				cfg.Zone = &storage.ZoneBeimei
+				log.Println("Zone: Beimei.")
+			}
+
+			fileUp.OnClicked(func(*ui.Button) {
+				log.Println("Button clicked: Upload.")
+
+				file := ui.OpenFile(window)
+				var fileName string
+				if runtime.GOOS == "windows" {
+					fileName = file[strings.LastIndex(file, "\\")+1:]
+				} else {
+					fileName = file[strings.LastIndex(file, "/")+1:]
+				}
+
+				putPolicy := storage.PutPolicy{
+					Scope: bucket.Text() + ":" + fileName,
+				}
+				upToken := putPolicy.UploadToken(mac)
+
+				formUploader := storage.NewFormUploader(&cfg)
+				ret := storage.PutRet{}
+
+				err := formUploader.PutFile(context.Background(),
+					&ret, upToken, fileName, file, &storage.PutExtra{})
+
+				if err != nil {
+					ui.MsgBoxError(window, "Error!", err.Error())
+					return
+				}
+
+				log.Println("Upload successfully.")
+
+				fileInfo, sErr := bucketManager.Stat(bucket.Text(),
+					fileName)
+				if sErr != nil {
+					ui.MsgBoxError(window, "Error!", sErr.Error())
+					return
+				}
+
+				log.Println("Fetch the uploaded file's info successfully.")
+
+				fileNameList = append(fileNameList, fileName)
+				log.Println("File name list increased.")
+
+				fileNameVBox.Append(ui.NewLabel(fileName), true)
+				log.Println("Added the file name.")
+
+				fileMTypeVBox.Append(
+					ui.NewLabel(fileInfo.MimeType), true)
+				log.Println("Added the file mime type.")
+
+				fileSizeVBox.Append(
+					ui.NewLabel(formatSize(fileInfo.Fsize)), true)
+				log.Println("Added the file size.")
+
+				tempCheckbox := ui.NewCheckbox("")
+				fileCheckboxList =
+					append(fileCheckboxList, *tempCheckbox)
+				log.Println("File checkbox list increased.")
+
+				fileCheckboxVBox.Append(tempCheckbox, true)
+				log.Println("Added the file checkbox.")
+				log.Println("Added a new row.")
+
+			})
+
+			fileDn.OnClicked(func(*ui.Button) {
+				log.Println("Button clicked: Download.")
+
+				for index := 0; index < len(fileNameList); index++ {
+					if fileCheckboxList[index].Checked() {
+						go func(i int) {
+
+							out, err := os.Create(fileNameList[i])
+							defer out.Close()
+							if err != nil {
+								ui.MsgBoxError(window, "Error!",
+									err.Error())
+								return
+							}
+
+							resp, err := http.Get("http://" +
+								domain.Text() + "/" + fileNameList[i])
+							if err != nil {
+								ui.MsgBoxError(window, "Error!",
+									err.Error())
+								return
+							}
+							defer resp.Body.Close()
+
+							_, err = io.Copy(out, resp.Body)
+							if err != nil {
+								ui.MsgBoxError(window, "Error!",
+									err.Error())
+							} else {
+								log.Println("Download",
+									fileNameList[i], "successfully.")
+							}
+
+						}(index)
+					}
+				}
+			})
+
+			fileDl.OnClicked(func(*ui.Button) {
+				log.Println("Button clicked: Delete.")
+
+				for index := 0; index < len(fileNameList); index++ {
+					if fileCheckboxList[index].Checked() {
+						log.Println("To be deleted:", fileNameList[index])
+
+						func(i int) {
+							err = bucketManager.Delete(bucket.Text(),
+								fileNameList[i])
+
+							if err != nil {
+								ui.MsgBoxError(window, "Error!", err.Error())
+							} else {
+								log.Println("Delete one file successfully.")
+							}
+						}(index)
+					}
+				}
+
+				log.Println("All selected files deleted.")
+
+				fileNameList, fileCheckboxList, err =
+					refresh(bucketManager, bucket.Text(),
+						fileNameVBox, fileMTypeVBox, fileSizeVBox,
+						fileCheckboxVBox)
+
+				if err != nil {
+					ui.MsgBoxError(window, "Error!", err.Error())
+				}
+			})
+
+			fileRd.OnClicked(func(*ui.Button) {
+				log.Println("Button clicked: Remote download.")
+
+				url := ui.NewEntry()
+				urlButton := ui.NewButton("确定")
+
+				urlHBox := ui.NewHorizontalBox()
+				urlHBox.SetPadded(true)
+				urlHBox.Append(ui.NewLabel("url"), false)
+				urlHBox.Append(url, true)
+				urlHBox.Append(urlButton, false)
+
+				urlWindow := ui.NewWindow("url", 1, 1, false)
+				urlWindow.SetMargined(true)
+				urlWindow.SetChild(urlHBox)
+
+				urlButton.OnClicked(func(*ui.Button) {
+					urlWindow.Hide()
+					fileName :=
+						url.Text()[strings.LastIndex(url.Text(), "/")+1:]
+					fetchRet, err :=
+						bucketManager.Fetch(url.Text(),
+							bucket.Text(), fileName)
+
+					if err != nil {
+						ui.MsgBoxError(window, "Error!", err.Error())
+						return
+					}
+
+					log.Println("Remote download successfully.")
+
+					fileNameVBox.Append(ui.NewLabel(fileName), true)
+					fileMTypeVBox.Append(
+						ui.NewLabel(fetchRet.MimeType), true)
+					fileSizeVBox.Append(
+						ui.NewLabel(formatSize(fetchRet.Fsize)), true)
+
+					fileNameList = append(fileNameList, fetchRet.Key)
+					tempCheckbox := ui.NewCheckbox("")
+					fileCheckboxList =
+						append(fileCheckboxList, *tempCheckbox)
+					fileCheckboxVBox.Append(tempCheckbox, true)
+
+				})
+				urlWindow.OnClosing(func(*ui.Window) bool {
+					return true
+				})
+				urlWindow.Show()
+			})
+
+			window.Show()
+		} else {
+			ui.MsgBoxError(login, "Error!", err.Error())
+		}
+	})
+
+	login.OnClosing(func(*ui.Window) bool {
+		ui.Quit()
+		return true
+	})
+
+	window.OnClosing(func(*ui.Window) bool {
+		ui.Quit()
+		return true
+	})
+
+	login.Show()
+}
+
+func refresh(
+	bucketManager *storage.BucketManager,
 	bucket string,
 	fileNameVBox *ui.Box,
 	fileMTypeVBox *ui.Box,
 	fileSizeVBox *ui.Box,
 	fileCheckboxVBox *ui.Box,
-) (fileNameList []string,
+) (
+	fileNameList []string,
 	fileCheckboxList []ui.Checkbox,
-	err error) {
+	err error,
+) {
 	log.Println("Refreshing the file list.")
 
 	fileNameVBox.Clear()
+	fileMTypeVBox.Clear()
 	fileSizeVBox.Clear()
 	fileCheckboxVBox.Clear()
 
