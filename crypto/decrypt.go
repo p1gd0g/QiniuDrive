@@ -11,8 +11,8 @@ import (
 	"github.com/p1gd0g/QiniuDrive/tool"
 )
 
-// Encrypt the file with password and save it.
-func Encrypt(pwd, file string) {
+// Decrypt the file with password and save it.
+func Decrypt(pwd, file string) {
 
 	dat, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -40,21 +40,6 @@ func Encrypt(pwd, file string) {
 	}
 	log.Println("Copy the reader successfully.")
 
-	ioutil.WriteFile("enced "+tool.GetFileName(file),
+	ioutil.WriteFile("deced "+tool.GetFileName(file),
 		out.Bytes(), 0644)
-
-}
-
-// FormatPwd formats the password so that the length is 32 Bytes.
-func FormatPwd(pwd string) string {
-
-	if len(pwd) > 32 {
-		pwd = pwd[:32]
-	}
-
-	for len(pwd) < 32 {
-		pwd += string(pwd[0])
-	}
-
-	return pwd
 }
