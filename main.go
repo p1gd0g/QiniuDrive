@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/p1gd0g/QiniuDrive/gui"
+	"github.com/p1gd0g/QiniuDrive/tool"
 	"github.com/p1gd0g/ui"
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
@@ -142,12 +142,7 @@ func login() {
 				log.Println("Button clicked: Upload.")
 
 				file := ui.OpenFile(window)
-				var fileName string
-				if runtime.GOOS == "windows" {
-					fileName = file[strings.LastIndex(file, "\\")+1:]
-				} else {
-					fileName = file[strings.LastIndex(file, "/")+1:]
-				}
+				fileName := tool.GetFileName(file)
 
 				putPolicy := storage.PutPolicy{
 					Scope: bucket.Text() + ":" + fileName,
