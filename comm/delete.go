@@ -17,7 +17,8 @@ func Delete(
 	mac := auth.New(accessKey, secretKey)
 	log.Println("mac created.")
 
-	bucketManager := storage.NewBucketManager(mac, &storage.Config{})
+	bucketManager := storage.NewBucketManager(
+		mac, &storage.Config{})
 	log.Println("bucketManager created.")
 
 	return bucketManager.Delete(bucket, name)

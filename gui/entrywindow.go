@@ -5,7 +5,8 @@ import (
 )
 
 // NewEntryWindow creates a window with an entry.
-func NewEntryWindow(s string) (*ui.Window, *ui.Entry, *ui.Button) {
+func NewEntryWindow(s string) (
+	*ui.Window, *ui.Entry, *ui.Button) {
 
 	entry := ui.NewEntry()
 
