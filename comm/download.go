@@ -11,20 +11,19 @@ import (
 func Download(
 	name, domain string) (err error) {
 
+	resp, err := http.Get("http://" +
+		domain + "/" + name)
+
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
 	out, err := os.Create(name)
 	defer out.Close()
 	if err != nil {
 		return
 	}
-
-	resp, err := http.Get("http://" +
-		domain + "/" + name)
-
-	if err != nil {
-		defer resp.Body.Close()
-		return
-	}
-	defer resp.Body.Close()
 
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
