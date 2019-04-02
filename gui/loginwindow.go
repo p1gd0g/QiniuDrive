@@ -7,8 +7,8 @@ import (
 	"github.com/p1gd0g/ui"
 )
 
-// NewLoginWindow creates the new login window.
-func NewLoginWindow() (
+// LoginWindow creates the new login window.
+func LoginWindow() (
 	*ui.Entry, *ui.Entry, *ui.Entry, *ui.Entry, *ui.Combobox,
 	*ui.Window, *FileList) {
 	fileList := NewFileList()

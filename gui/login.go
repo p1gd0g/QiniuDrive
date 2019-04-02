@@ -2,14 +2,14 @@ package gui
 
 import "log"
 
-// Login creates the login window and inputs info.
+// Login creates the login window and collects infos.
 func Login() {
 
 	accessKey, secretKey, bucket, domain, zone, window, fileList :=
-		NewLoginWindow()
-	log.Println("Logined.")
+		LoginWindow()
+	log.Println("Logined, close the login window.")
 
-	NewFileWindow(
+	FileWindow(
 		accessKey, secretKey, bucket, domain, zone, window, fileList)
 
 }

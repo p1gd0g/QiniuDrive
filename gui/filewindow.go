@@ -8,8 +8,8 @@ import (
 	"github.com/p1gd0g/ui"
 )
 
-// NewFileWindow creates a new file window.
-func NewFileWindow(
+// FileWindow creates a new file window.
+func FileWindow(
 	accessKey *ui.Entry,
 	secretKey *ui.Entry,
 	bucket *ui.Entry,
