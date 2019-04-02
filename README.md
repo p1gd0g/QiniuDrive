@@ -1,3 +1,3 @@
 # QiniuDrive
 
-A client of Qiniu.
+A client for Qiniu.

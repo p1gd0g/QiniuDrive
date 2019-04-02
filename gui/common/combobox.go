@@ -1,4 +1,4 @@
-package gui
+package common
 
 import "github.com/p1gd0g/ui"
 

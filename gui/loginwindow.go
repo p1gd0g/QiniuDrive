@@ -3,18 +3,22 @@ package gui
 import (
 	"log"
 
+	"github.com/p1gd0g/QiniuDrive/gui/common"
 	"github.com/p1gd0g/ui"
 )
 
 // NewLoginWindow creates the new login window.
-func NewLoginWindow(window *ui.Window, fileList *FileList) (
-	*ui.Entry, *ui.Entry, *ui.Entry, *ui.Entry, *ui.Combobox) {
+func NewLoginWindow() (
+	*ui.Entry, *ui.Entry, *ui.Entry, *ui.Entry, *ui.Combobox,
+	*ui.Window, *FileList) {
+	fileList := NewFileList()
+
 	accessKey := ui.NewEntry()
 	secretKey := ui.NewPasswordEntry()
 	bucket := ui.NewEntry()
 	domain := ui.NewEntry()
 
-	zone := NewCombobox("华东", "华北", "华南", "北美")
+	zone := common.NewCombobox("华东", "华北", "华南", "北美")
 
 	loginForm := ui.NewForm()
 	loginForm.SetPadded(true)
@@ -38,6 +42,8 @@ func NewLoginWindow(window *ui.Window, fileList *FileList) (
 	login := ui.NewWindow("登录", 200, 1, false)
 	login.SetMargined(true)
 	login.SetChild(loginVBox)
+
+	window := ui.NewWindow("QiniuDrive", 600, 600, false)
 
 	loginButton.OnClicked(func(*ui.Button) {
 		log.Println("accessKey:", accessKey.Text())
@@ -63,5 +69,5 @@ func NewLoginWindow(window *ui.Window, fileList *FileList) (
 
 	login.Show()
 
-	return accessKey, secretKey, bucket, domain, zone
+	return accessKey, secretKey, bucket, domain, zone, window, fileList
 }
