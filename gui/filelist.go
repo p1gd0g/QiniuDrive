@@ -63,9 +63,11 @@ func (l *FileList) Display(
 	l.mType.Clear()
 	l.size.Clear()
 	l.checkbox.Clear()
+	log.Println("Boxes cleared.")
 
 	l.NameList = []string{}
 	l.CheckboxList = []*ui.Checkbox{}
+	log.Println("List cleared.")
 
 	for _, item := range list {
 		l.name.Append(ui.NewLabel(item.Key), true)
@@ -79,6 +81,6 @@ func (l *FileList) Display(
 		l.checkbox.Append(tempCheckbox, true)
 		l.CheckboxList = append(l.CheckboxList, tempCheckbox)
 	}
-
+	log.Println("Displayed the list.")
 	return
 }

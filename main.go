@@ -162,42 +162,31 @@ func login() {
 			fileRd.OnClicked(func(*ui.Button) {
 				log.Println("Button clicked: Remote download.")
 
-				url := ui.NewEntry()
-				urlButton := ui.NewButton("确定")
-
-				urlHBox := ui.NewHorizontalBox()
-				urlHBox.SetPadded(true)
-				urlHBox.Append(ui.NewLabel("url"), false)
-				urlHBox.Append(url, true)
-				urlHBox.Append(urlButton, false)
-
-				urlWindow := ui.NewWindow("url", 1, 1, false)
-				urlWindow.SetMargined(true)
-				urlWindow.SetChild(urlHBox)
+				urlWindow, urlEntry, urlButton :=
+					gui.NewEntryWindow("url")
 
 				urlButton.OnClicked(func(*ui.Button) {
 					urlWindow.Hide()
 
-					go func() {
-						err =
-							comm.RemoteDownload(
-								accessKey.Text(),
-								secretKey.Text(),
-								bucket.Text(),
-								url.Text())
+					err =
+						comm.RemoteDownload(
+							accessKey.Text(),
+							secretKey.Text(),
+							bucket.Text(),
+							urlEntry.Text())
 
-						if err != nil {
-							ui.MsgBoxError(window, "Error!", err.Error())
-							return
-						}
-						log.Println("Remote download successfully.")
+					if err != nil {
+						ui.MsgBoxError(window, "Error!", err.Error())
+						return
+					}
+					log.Println("Remote download successfully.")
 
-						err = fileList.Display(
-							accessKey.Text(), secretKey.Text(), bucket.Text())
-						if err != nil {
-							ui.MsgBoxError(window, "Error!", err.Error())
-						}
-					}()
+					err = fileList.Display(
+						accessKey.Text(), secretKey.Text(), bucket.Text())
+					if err != nil {
+						ui.MsgBoxError(window, "Error!", err.Error())
+					}
+
 				})
 				urlWindow.OnClosing(func(*ui.Window) bool {
 					return true
