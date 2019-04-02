@@ -100,7 +100,6 @@ func FileWindow(
 				} else {
 					log.Println("Delete one file successfully.")
 				}
-
 			}
 		}
 		log.Println("All selected files deleted.")
@@ -121,12 +120,11 @@ func FileWindow(
 		urlButton.OnClicked(func(*ui.Button) {
 			urlWindow.Hide()
 
-			err :=
-				comm.RemoteDownload(
-					accessKey.Text(),
-					secretKey.Text(),
-					bucket.Text(),
-					urlEntry.Text())
+			err := comm.RemoteDownload(
+				accessKey.Text(),
+				secretKey.Text(),
+				bucket.Text(),
+				urlEntry.Text())
 
 			if err != nil {
 				ui.MsgBoxError(window, "Error!", err.Error())
