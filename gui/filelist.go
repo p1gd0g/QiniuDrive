@@ -31,7 +31,7 @@ func NewFileList() (l *FileList) {
 	l.size = ui.NewVerticalBox()
 	l.checkbox = ui.NewVerticalBox()
 
-	l.HBox = ui.NewVerticalBox()
+	l.HBox = ui.NewHorizontalBox()
 	l.HBox.SetPadded(true)
 
 	l.HBox.Append(l.name, true)
