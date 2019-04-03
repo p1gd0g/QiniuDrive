@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/p1gd0g/QiniuDrive/comm"
-	"github.com/p1gd0g/QiniuDrive/gui/common"
 	"github.com/p1gd0g/ui"
 )
 
@@ -114,35 +113,7 @@ func FileWindow(
 	fileRd.OnClicked(func(*ui.Button) {
 		log.Println("Button clicked: Remote download.")
 
-		urlWindow, urlEntry, urlButton :=
-			common.NewEntryWindow("url")
-
-		urlButton.OnClicked(func(*ui.Button) {
-			urlWindow.Hide()
-
-			err := comm.RemoteDownload(
-				accessKey.Text(),
-				secretKey.Text(),
-				bucket.Text(),
-				urlEntry.Text())
-
-			if err != nil {
-				ui.MsgBoxError(window, "Error!", err.Error())
-				return
-			}
-			log.Println("Remote download successfully.")
-
-			err = fileList.Display(
-				accessKey.Text(), secretKey.Text(), bucket.Text())
-			if err != nil {
-				ui.MsgBoxError(window, "Error!", err.Error())
-			}
-
-		})
-		urlWindow.OnClosing(func(*ui.Window) bool {
-			return true
-		})
-		urlWindow.Show()
+		URLWindow(accessKey, secretKey, bucket, fileList)
 	})
 
 	window.OnClosing(func(*ui.Window) bool {

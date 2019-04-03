@@ -25,6 +25,10 @@ func NewEntryWindow(s string) (
 	window.SetMargined(true)
 	window.SetChild(hBox)
 
+	window.OnClosing(func(*ui.Window) bool {
+		return true
+	})
+
 	window.Show()
 
 	return window, entry, button
