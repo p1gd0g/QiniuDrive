@@ -47,12 +47,12 @@ func NewFileList() (l *FileList) {
 
 // Display the file list using imported data.
 func (l *FileList) Display(
-	accessKey,
-	secretKey,
-	bucket string) (err error) {
+	accessKey *ui.Entry,
+	secretKey *ui.Entry,
+	bucket *ui.Entry) (err error) {
 
 	list, err := comm.Refresh(
-		accessKey, secretKey, bucket)
+		accessKey.Text(), secretKey.Text(), bucket.Text())
 
 	if err != nil {
 		return
@@ -67,7 +67,7 @@ func (l *FileList) Display(
 
 	l.NameList = []string{}
 	l.CheckboxList = []*ui.Checkbox{}
-	log.Println("List cleared.")
+	log.Println("Lists cleared.")
 
 	for _, item := range list {
 		l.name.Append(ui.NewLabel(item.Key), true)
@@ -82,5 +82,6 @@ func (l *FileList) Display(
 		l.CheckboxList = append(l.CheckboxList, tempCheckbox)
 	}
 	log.Println("Displayed the list.")
+
 	return
 }

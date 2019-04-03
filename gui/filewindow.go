@@ -29,6 +29,10 @@ func FileWindow(
 	fileOpHBox.Append(fileDl, true)
 	fileOpHBox.Append(fileRd, true)
 
+	fileBar := ui.NewProgressBar()
+	fileBar.Hide()
+	fileBar.SetValue(-1)
+
 	fileVBox := ui.NewVerticalBox()
 	fileVBox.SetPadded(true)
 	fileVBox.Append(ui.NewLabel("文件信息"), false)
@@ -37,6 +41,7 @@ func FileWindow(
 	fileVBox.Append(ui.NewHorizontalBox(), true)
 	fileVBox.Append(ui.NewVerticalSeparator(), false)
 	fileVBox.Append(fileOpHBox, false)
+	fileVBox.Append(fileBar, false)
 
 	window.SetMargined(true)
 	window.SetChild(fileVBox)
@@ -45,75 +50,109 @@ func FileWindow(
 		log.Println("Button clicked: Upload.")
 
 		file := ui.OpenFile(window)
-
-		err := comm.Upload(
-			accessKey.Text(), secretKey.Text(), bucket.Text(),
-			file, zone.Selected())
-		if err != nil {
-			ui.MsgBoxError(window, "Error!", err.Error())
+		if file == "" {
 			return
 		}
+		log.Println("File is", file)
 
-		log.Println("Upload successfully.")
+		fileBar.Show()
+		log.Println("Bar shows.")
 
-		err = fileList.Display(
-			accessKey.Text(), secretKey.Text(), bucket.Text())
-		if err != nil {
-			ui.MsgBoxError(window, "Error!",
-				err.Error())
-		}
+		go func() {
+
+			err := comm.Upload(
+				accessKey.Text(), secretKey.Text(), bucket.Text(),
+				file, zone.Selected())
+
+			ui.QueueMain(func() {
+				if err != nil {
+					ui.MsgBoxError(window, "Error!", err.Error())
+					return
+				}
+				log.Println("Upload successfully.")
+
+				err = fileList.Display(
+					accessKey, secretKey, bucket)
+				if err != nil {
+					ui.MsgBoxError(window, "Error!", err.Error())
+				}
+				log.Println("Display successfully.")
+
+				fileBar.Hide()
+				log.Println("Bar hides.")
+			})
+		}()
 
 	})
 
 	fileDn.OnClicked(func(*ui.Button) {
 		log.Println("Button clicked: Download.")
 
-		for i := 0; i < len(fileList.NameList); i++ {
-			if fileList.CheckboxList[i].Checked() {
-				go func(name, domain string) {
-					err := comm.Download(name, domain)
-					if err != nil {
-						ui.MsgBoxError(window, "Error!",
-							err.Error())
-					}
-				}(fileList.NameList[i], domain.Text())
+		fileBar.Show()
+		log.Println("Bar shows.")
+
+		go func() {
+			for i := 0; i < len(fileList.NameList); i++ {
+				if fileList.CheckboxList[i].Checked() {
+					go func(name, domain string) {
+						err := comm.Download(name, domain)
+						if err != nil {
+							ui.MsgBoxError(window, "Error!",
+								err.Error())
+						}
+					}(fileList.NameList[i], domain.Text())
+				}
 			}
-		}
+			fileBar.Hide()
+			log.Println("Bar hides.")
+		}()
 	})
 
 	fileDl.OnClicked(func(*ui.Button) {
 		log.Println("Button clicked: Delete.")
 
-		for i := 0; i < len(fileList.NameList); i++ {
-			if fileList.CheckboxList[i].Checked() {
-				log.Println("To be deleted:", fileList.NameList[i])
+		fileBar.Show()
+		log.Println("Bar shows.")
 
-				err := comm.Delete(
-					accessKey.Text(),
-					secretKey.Text(),
-					bucket.Text(),
-					fileList.NameList[i])
+		go func() {
+			for i := 0; i < len(fileList.NameList); i++ {
+				if fileList.CheckboxList[i].Checked() {
+					log.Println("To be deleted:", fileList.NameList[i])
 
-				if err != nil {
-					ui.MsgBoxError(window, "Error!", err.Error())
-				} else {
-					log.Println("Delete one file successfully.")
+					err := comm.Delete(
+						accessKey.Text(),
+						secretKey.Text(),
+						bucket.Text(),
+						fileList.NameList[i])
+
+					if err != nil {
+						ui.MsgBoxError(window, "Error!", err.Error())
+					} else {
+						log.Println("Delete one file successfully.")
+					}
 				}
 			}
-		}
-		log.Println("All selected files deleted.")
+			log.Println("All selected files deleted.")
 
-		err := fileList.Display(
-			accessKey.Text(), secretKey.Text(), bucket.Text())
-		if err != nil {
-			ui.MsgBoxError(window, "Error!", err.Error())
-		}
+			ui.QueueMain(func() {
+
+				err := fileList.Display(
+					accessKey, secretKey, bucket)
+				if err != nil {
+					ui.MsgBoxError(window, "Error!", err.Error())
+				}
+				fileBar.Hide()
+				log.Println("Bar hides.")
+			})
+		}()
 	})
 
 	fileRd.OnClicked(func(*ui.Button) {
 		log.Println("Button clicked: Remote download.")
 
-		URLWindow(accessKey, secretKey, bucket, fileList)
+		URLWindow(accessKey, secretKey, bucket,
+			fileList, fileBar)
+
 	})
 
 	window.OnClosing(func(*ui.Window) bool {

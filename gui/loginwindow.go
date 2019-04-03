@@ -58,18 +58,19 @@ func LoginWindow() (
 
 		go func() {
 			err := fileList.Display(
-				accessKey.Text(), secretKey.Text(), bucket.Text())
+				accessKey, secretKey, bucket)
 
 			ui.QueueMain(func() {
-				if err == nil {
-					log.Println("List files successfully.")
-					login.Hide()
-
-					window.Show()
-				} else {
+				if err != nil {
 					ui.MsgBoxError(login, "Error!", err.Error())
+					return
 				}
+				log.Println("List files successfully.")
+
 				loginBar.Hide()
+				login.Hide()
+
+				window.Show()
 			})
 		}()
 	})
