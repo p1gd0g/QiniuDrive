@@ -19,6 +19,7 @@ func LoginWindow() (
 	domain := ui.NewEntry()
 
 	zone := common.NewCombobox("华东", "华北", "华南", "北美")
+	zone.SetSelected(2)
 
 	loginForm := ui.NewForm()
 	loginForm.SetPadded(true)
@@ -34,10 +35,15 @@ func LoginWindow() (
 
 	loginButton := ui.NewButton("登录")
 
+	loginBar := ui.NewProgressBar()
+	loginBar.Hide()
+	loginBar.SetValue(-1)
+
 	loginVBox := ui.NewVerticalBox()
 	loginVBox.SetPadded(true)
 	loginVBox.Append(loginGroup, false)
 	loginVBox.Append(loginButton, false)
+	loginVBox.Append(loginBar, false)
 
 	login := ui.NewWindow("登录", 200, 1, false)
 	login.SetMargined(true)
@@ -46,20 +52,30 @@ func LoginWindow() (
 	window := ui.NewWindow("QiniuDrive", 600, 600, false)
 
 	loginButton.OnClicked(func(*ui.Button) {
+		loginBar.Show()
 		log.Println("accessKey:", accessKey.Text())
 		log.Println("secretKey:", secretKey.Text())
 
-		err := fileList.Display(
-			accessKey.Text(), secretKey.Text(), bucket.Text())
+		go func() {
+			err := fileList.Display(
+				accessKey.Text(), secretKey.Text(), bucket.Text())
 
-		if err == nil {
-			log.Println("List files successfully.")
-			login.Hide()
+			ui.QueueMain(func() {
+				if err == nil {
+					log.Println("List files successfully.")
+					login.Hide()
 
-			window.Show()
-		} else {
-			ui.MsgBoxError(login, "Error!", err.Error())
-		}
+					window.Show()
+				} else {
+					ui.MsgBoxError(login, "Error!", err.Error())
+				}
+				loginBar.Hide()
+			})
+		}()
+	})
+
+	bucket.OnChanged(func(*ui.Entry) {
+		domain.SetText(bucket.Text())
 	})
 
 	login.OnClosing(func(*ui.Window) bool {
@@ -69,5 +85,6 @@ func LoginWindow() (
 
 	login.Show()
 
-	return accessKey, secretKey, bucket, domain, zone, window, fileList
+	return accessKey, secretKey, bucket, domain,
+		zone, window, fileList
 }
