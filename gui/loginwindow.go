@@ -95,6 +95,8 @@ func LoginWindow() {
 
 	loginWindow.OnClosing(func(*ui.Window) bool {
 		ui.Quit()
+		log.Println("loginWindow quitted.")
+
 		return true
 	})
 
