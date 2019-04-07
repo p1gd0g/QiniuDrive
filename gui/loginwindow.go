@@ -45,11 +45,12 @@ func LoginWindow() (
 	loginVBox.Append(loginButton, false)
 	loginVBox.Append(loginBar, false)
 
-	login := ui.NewWindow("登录", 200, 1, false)
-	login.SetMargined(true)
-	login.SetChild(loginVBox)
+	loginWindow := ui.NewWindow("登录", 200, 1, false)
+	loginWindow.SetMargined(true)
+	loginWindow.SetChild(loginVBox)
 
-	window := ui.NewWindow("QiniuDrive", 600, 600, false)
+	fileWindow := ui.NewWindow("QiniuDrive", 600, 600, false)
+	fileWindow.SetMargined(true)
 
 	loginButton.OnClicked(func(*ui.Button) {
 		loginBar.Show()
@@ -62,17 +63,22 @@ func LoginWindow() (
 
 			ui.QueueMain(func() {
 				if err != nil {
-					ui.MsgBoxError(login, "Error!", err.Error())
+					ui.MsgBoxError(loginWindow, "Error!", err.Error())
 					loginBar.Hide()
 					return
 				}
 				log.Println("List files successfully.")
 
 				loginBar.Hide()
-				login.Hide()
+				log.Println("loginBar hided.")
 
-				window.Show()
+				loginWindow.Hide()
+				log.Println("loginWindow hided.")
+
+				fileWindow.Show()
+				log.Println("fileWindow showed.")
 			})
+
 		}()
 	})
 
@@ -80,13 +86,13 @@ func LoginWindow() (
 		domain.SetText(bucket.Text())
 	})
 
-	login.OnClosing(func(*ui.Window) bool {
+	loginWindow.OnClosing(func(*ui.Window) bool {
 		ui.Quit()
 		return true
 	})
 
-	login.Show()
+	loginWindow.Show()
 
 	return accessKey, secretKey, bucket, domain,
-		zone, window, fileList
+		zone, fileWindow, fileList
 }

@@ -14,7 +14,7 @@ func FileWindow(
 	bucket *ui.Entry,
 	domain *ui.Entry,
 	zone *ui.Combobox,
-	window *ui.Window,
+	fileWindow *ui.Window,
 	fileList *FileList) {
 
 	fileUp := ui.NewButton("上传文件")
@@ -43,13 +43,12 @@ func FileWindow(
 	fileVBox.Append(fileOpHBox, false)
 	fileVBox.Append(fileBar, false)
 
-	window.SetMargined(true)
-	window.SetChild(fileVBox)
+	fileWindow.SetChild(fileVBox)
 
 	fileUp.OnClicked(func(*ui.Button) {
 		log.Println("Button clicked: Upload.")
 
-		file := ui.OpenFile(window)
+		file := ui.OpenFile(fileWindow)
 		if file == "" {
 			return
 		}
@@ -66,7 +65,7 @@ func FileWindow(
 
 			ui.QueueMain(func() {
 				if err != nil {
-					ui.MsgBoxError(window, "Error!", err.Error())
+					ui.MsgBoxError(fileWindow, "Error!", err.Error())
 					return
 				}
 				log.Println("Upload successfully.")
@@ -74,7 +73,7 @@ func FileWindow(
 				err = fileList.Display(
 					accessKey, secretKey, bucket)
 				if err != nil {
-					ui.MsgBoxError(window, "Error!", err.Error())
+					ui.MsgBoxError(fileWindow, "Error!", err.Error())
 				}
 				log.Println("Display successfully.")
 
@@ -98,7 +97,7 @@ func FileWindow(
 						err := comm.Download(name, domain)
 						ui.QueueMain(func() {
 							if err != nil {
-								ui.MsgBoxError(window, "Error!",
+								ui.MsgBoxError(fileWindow, "Error!",
 									err.Error())
 							}
 
@@ -131,7 +130,7 @@ func FileWindow(
 
 					ui.QueueMain(func() {
 						if err != nil {
-							ui.MsgBoxError(window, "Error!", err.Error())
+							ui.MsgBoxError(fileWindow, "Error!", err.Error())
 							return
 						}
 						log.Println("Delete one file successfully.")
@@ -139,7 +138,7 @@ func FileWindow(
 						err := fileList.Display(
 							accessKey, secretKey, bucket)
 						if err != nil {
-							ui.MsgBoxError(window, "Error!", err.Error())
+							ui.MsgBoxError(fileWindow, "Error!", err.Error())
 						}
 						fileBar.Hide()
 						log.Println("Bar hides.")
@@ -166,12 +165,12 @@ func FileWindow(
 			ui.QueueMain(func() {
 
 				if err != nil {
-					ui.MsgBoxError(window, "Error!", (*err).Error())
+					ui.MsgBoxError(fileWindow, "Error!", (*err).Error())
 				}
 				*err = fileList.Display(
 					accessKey, secretKey, bucket)
 				if err != nil {
-					ui.MsgBoxError(window, "Error!", (*err).Error())
+					ui.MsgBoxError(fileWindow, "Error!", (*err).Error())
 				}
 				fileBar.Hide()
 				log.Println("Bar hides.")
@@ -180,7 +179,7 @@ func FileWindow(
 
 	})
 
-	window.OnClosing(func(*ui.Window) bool {
+	fileWindow.OnClosing(func(*ui.Window) bool {
 		ui.Quit()
 		return true
 	})
