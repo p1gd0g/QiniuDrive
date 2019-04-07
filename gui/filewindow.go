@@ -36,9 +36,7 @@ func FileWindow(
 	fileVBox.SetPadded(true)
 	fileVBox.Append(ui.NewLabel("文件信息"), false)
 	fileVBox.Append(ui.NewVerticalSeparator(), false)
-	log.Println("!!!")
 	fileVBox.Append(fileList.HBox, false)
-	log.Println("???")
 	fileVBox.Append(ui.NewHorizontalBox(), true)
 	fileVBox.Append(ui.NewVerticalSeparator(), false)
 	fileVBox.Append(fileOpHBox, false)
@@ -156,30 +154,40 @@ func FileWindow(
 	fileRd.OnClicked(func(*ui.Button) {
 		log.Println("Button clicked: Remote download.")
 
-		fileBar.Show()
-		log.Println("Bar shows.")
+		urlEntry, urlButton, URLWindow := URLWindow()
 
-		go func() {
+		urlButton.OnClicked(func(*ui.Button) {
+			URLWindow.Hide()
+			fileBar.Show()
+			log.Println("Bar shows.")
 
-			var err *error
-			URLWindow(accessKey, secretKey, bucket,
-				fileList, err)
-
-			ui.QueueMain(func() {
+			go func() {
+				err := comm.RemoteDownload(
+					accessKey.Text(),
+					secretKey.Text(),
+					bucket.Text(),
+					urlEntry.Text())
 
 				if err != nil {
-					ui.MsgBoxError(fileWindow, "Error!", (*err).Error())
+					return
 				}
-				*err = fileList.Display(
-					accessKey, secretKey, bucket)
-				if err != nil {
-					ui.MsgBoxError(fileWindow, "Error!", (*err).Error())
-				}
-				fileBar.Hide()
-				log.Println("Bar hides.")
-			})
-		}()
+				log.Println("Remote download successfully.")
 
+				ui.QueueMain(func() {
+
+					if err != nil {
+						ui.MsgBoxError(fileWindow, "Error!", err.Error())
+					}
+					err = fileList.Display(
+						accessKey, secretKey, bucket)
+					if err != nil {
+						ui.MsgBoxError(fileWindow, "Error!", err.Error())
+					}
+					fileBar.Hide()
+					log.Println("Bar hides.")
+				})
+			}()
+		})
 	})
 
 	fileWindow.OnClosing(func(*ui.Window) bool {
