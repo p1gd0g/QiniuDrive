@@ -65,28 +65,28 @@ func LoginWindow() {
 		log.Println("accessKey:", accessKey.Text())
 		log.Println("secretKey:", secretKey.Text())
 
-		go func() {
-			err := fileList.Display(
-				accessKey, secretKey, bucket)
+		// go func() {
+		err := fileList.Display(
+			accessKey, secretKey, bucket)
 
-			ui.QueueMain(func() {
-				if err != nil {
-					ui.MsgBoxError(loginWindow, "Error!", err.Error())
-					loginBar.Hide()
-					return
-				}
-				log.Println("List files successfully.")
+		// ui.QueueMain(func() {
+		if err != nil {
+			ui.MsgBoxError(loginWindow, "Error!", err.Error())
+			loginBar.Hide()
+			return
+		}
+		log.Println("List files successfully.")
 
-				loginBar.Hide()
-				log.Println("loginBar hided.")
+		loginBar.Hide()
+		log.Println("loginBar hided.")
 
-				loginWindow.Hide()
-				log.Println("loginWindow hided.")
+		loginWindow.Hide()
+		log.Println("loginWindow hided.")
 
-				FileWindow(accessKey, secretKey, bucket, domain,
-					zone, fileList)
-			})
-		}()
+		FileWindow(accessKey, secretKey, bucket, domain,
+			zone, fileList)
+		// })
+		// }()
 	})
 
 	bucket.OnChanged(func(*ui.Entry) {
