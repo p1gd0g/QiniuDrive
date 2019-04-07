@@ -13,7 +13,7 @@ func URLWindow(
 	secretKey *ui.Entry,
 	bucket *ui.Entry,
 	fileList *FileList,
-	bar *ui.ProgressBar) {
+	err *error) {
 	entry := ui.NewEntry()
 
 	form := ui.NewForm()
@@ -33,32 +33,21 @@ func URLWindow(
 
 	button.OnClicked(func(*ui.Button) {
 
-		bar.Show()
-		log.Println("Bar shows.")
-
 		go func() {
-			err := comm.RemoteDownload(
+
+			*err = comm.RemoteDownload(
 				accessKey.Text(),
 				secretKey.Text(),
 				bucket.Text(),
 				entry.Text())
 
 			if err != nil {
-				ui.MsgBoxError(window, "Error!", err.Error())
 				return
 			}
 			log.Println("Remote download successfully.")
 
-			err = fileList.Display(
-				accessKey, secretKey, bucket)
-			if err != nil {
-				ui.MsgBoxError(window, "Error!", err.Error())
-			}
-			bar.Hide()
-			log.Println("Bar hides.")
+			window.Hide()
 		}()
-
-		window.Hide()
 	})
 
 	window.OnClosing(func(*ui.Window) bool {

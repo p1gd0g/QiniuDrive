@@ -96,15 +96,19 @@ func FileWindow(
 				if fileList.CheckboxList[i].Checked() {
 					go func(name, domain string) {
 						err := comm.Download(name, domain)
-						if err != nil {
-							ui.MsgBoxError(window, "Error!",
-								err.Error())
-						}
+						ui.QueueMain(func() {
+							if err != nil {
+								ui.MsgBoxError(window, "Error!",
+									err.Error())
+							}
+
+							fileBar.Hide()
+							log.Println("Bar hides.")
+						})
 					}(fileList.NameList[i], domain.Text())
 				}
 			}
-			fileBar.Hide()
-			log.Println("Bar hides.")
+
 		}()
 	})
 
@@ -125,33 +129,54 @@ func FileWindow(
 						bucket.Text(),
 						fileList.NameList[i])
 
-					if err != nil {
-						ui.MsgBoxError(window, "Error!", err.Error())
-					} else {
+					ui.QueueMain(func() {
+						if err != nil {
+							ui.MsgBoxError(window, "Error!", err.Error())
+							return
+						}
 						log.Println("Delete one file successfully.")
-					}
+
+						err := fileList.Display(
+							accessKey, secretKey, bucket)
+						if err != nil {
+							ui.MsgBoxError(window, "Error!", err.Error())
+						}
+						fileBar.Hide()
+						log.Println("Bar hides.")
+					})
 				}
 			}
 			log.Println("All selected files deleted.")
 
-			ui.QueueMain(func() {
-
-				err := fileList.Display(
-					accessKey, secretKey, bucket)
-				if err != nil {
-					ui.MsgBoxError(window, "Error!", err.Error())
-				}
-				fileBar.Hide()
-				log.Println("Bar hides.")
-			})
 		}()
 	})
 
 	fileRd.OnClicked(func(*ui.Button) {
 		log.Println("Button clicked: Remote download.")
 
-		URLWindow(accessKey, secretKey, bucket,
-			fileList, fileBar)
+		fileBar.Show()
+		log.Println("Bar shows.")
+
+		go func() {
+
+			var err *error
+			URLWindow(accessKey, secretKey, bucket,
+				fileList, err)
+
+			ui.QueueMain(func() {
+
+				if err != nil {
+					ui.MsgBoxError(window, "Error!", (*err).Error())
+				}
+				*err = fileList.Display(
+					accessKey, secretKey, bucket)
+				if err != nil {
+					ui.MsgBoxError(window, "Error!", (*err).Error())
+				}
+				fileBar.Hide()
+				log.Println("Bar hides.")
+			})
+		}()
 
 	})
 

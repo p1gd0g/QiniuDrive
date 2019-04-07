@@ -63,6 +63,7 @@ func LoginWindow() (
 			ui.QueueMain(func() {
 				if err != nil {
 					ui.MsgBoxError(login, "Error!", err.Error())
+					loginBar.Hide()
 					return
 				}
 				log.Println("List files successfully.")
