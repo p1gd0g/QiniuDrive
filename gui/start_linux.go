@@ -9,12 +9,9 @@ import (
 // Start starts the ui.
 func Start() {
 	err := ui.Main(func() {
-		accessKey, secretKey, bucket, domain,
-			zone, window, fileList :=
-			LoginWindow()
 
-		FileWindow(accessKey, secretKey, bucket, domain,
-			zone, window, fileList)
+		LoginWindow()
+
 	})
 	if err != nil {
 		panic(err)
