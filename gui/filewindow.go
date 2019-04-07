@@ -14,7 +14,6 @@ func FileWindow(
 	bucket *ui.Entry,
 	domain *ui.Entry,
 	zone *ui.Combobox,
-	fileWindow *ui.Window,
 	fileList *FileList) {
 
 	fileUp := ui.NewButton("上传文件")
@@ -43,6 +42,8 @@ func FileWindow(
 	fileVBox.Append(fileOpHBox, false)
 	fileVBox.Append(fileBar, false)
 
+	fileWindow := ui.NewWindow("QiniuDrive", 600, 600, false)
+	fileWindow.SetMargined(true)
 	fileWindow.SetChild(fileVBox)
 
 	fileUp.OnClicked(func(*ui.Button) {
@@ -183,4 +184,7 @@ func FileWindow(
 		ui.Quit()
 		return true
 	})
+
+	fileWindow.Show()
+	log.Println("fileWindow showed.")
 }

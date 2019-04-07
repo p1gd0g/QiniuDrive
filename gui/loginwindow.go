@@ -1,25 +1,36 @@
 package gui
 
 import (
+	"flag"
 	"log"
+	"strconv"
 
 	"github.com/p1gd0g/QiniuDrive/gui/common"
 	"github.com/p1gd0g/ui"
 )
 
 // LoginWindow creates the new login window.
-func LoginWindow() (
-	*ui.Entry, *ui.Entry, *ui.Entry, *ui.Entry, *ui.Combobox,
-	*ui.Window, *FileList) {
+func LoginWindow() {
+	var ak = flag.Lookup("ak").Value.String()
+	var sk = flag.Lookup("sk").Value.String()
+	var bk = flag.Lookup("bk").Value.String()
+	var dm = flag.Lookup("dm").Value.String()
+	var zn = flag.Lookup("zn").Value.String()
+
 	fileList := NewFileList()
 
 	accessKey := ui.NewEntry()
+	accessKey.SetText(ak)
 	secretKey := ui.NewPasswordEntry()
+	secretKey.SetText(sk)
 	bucket := ui.NewEntry()
+	bucket.SetText(bk)
 	domain := ui.NewEntry()
+	domain.SetText(dm)
 
 	zone := common.NewCombobox("华东", "华北", "华南", "北美")
-	zone.SetSelected(2)
+	zoneIndex, _ := strconv.Atoi(zn)
+	zone.SetSelected(zoneIndex)
 
 	loginForm := ui.NewForm()
 	loginForm.SetPadded(true)
@@ -49,9 +60,6 @@ func LoginWindow() (
 	loginWindow.SetMargined(true)
 	loginWindow.SetChild(loginVBox)
 
-	fileWindow := ui.NewWindow("QiniuDrive", 600, 600, false)
-	fileWindow.SetMargined(true)
-
 	loginButton.OnClicked(func(*ui.Button) {
 		loginBar.Show()
 		log.Println("accessKey:", accessKey.Text())
@@ -75,10 +83,9 @@ func LoginWindow() (
 				loginWindow.Hide()
 				log.Println("loginWindow hided.")
 
-				fileWindow.Show()
-				log.Println("fileWindow showed.")
+				FileWindow(accessKey, secretKey, bucket, domain,
+					zone, fileList)
 			})
-
 		}()
 	})
 
@@ -92,7 +99,5 @@ func LoginWindow() (
 	})
 
 	loginWindow.Show()
-
-	return accessKey, secretKey, bucket, domain,
-		zone, fileWindow, fileList
+	log.Println("loginWindow showed.")
 }
