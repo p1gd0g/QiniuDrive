@@ -11,20 +11,21 @@ import (
 	"github.com/p1gd0g/QiniuDrive/tool"
 )
 
-// Encrypt the file with password and save it.
-func Encrypt(pwd, file string) {
+// Encrypt the file with key and save it.
+// The following precess is similar to decrypt.
+func Encrypt(key, file string) error {
 
 	dat, err := ioutil.ReadFile(file)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	log.Println("Read file successful.")
 
 	bReader := bytes.NewReader(dat)
 
-	block, err := aes.NewCipher([]byte(FormatPwd(pwd)))
+	block, err := aes.NewCipher([]byte(FormatPwd(key)))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	log.Println("Create new cipher successfully.")
 
@@ -36,25 +37,26 @@ func Encrypt(pwd, file string) {
 	writer := &cipher.StreamWriter{S: stream, W: &out}
 
 	if _, err := io.Copy(writer, bReader); err != nil {
-		panic(err)
+		return err
 	}
 	log.Println("Copy the reader successfully.")
 
 	ioutil.WriteFile("enced "+tool.GetFileName(file),
 		out.Bytes(), 0644)
 
+	return err
 }
 
-// FormatPwd formats the password so that the length is 32 Bytes.
-func FormatPwd(pwd string) string {
+// FormatPwd formats the key so that the length is 32 Bytes.
+func FormatPwd(key string) string {
 
-	if len(pwd) > 32 {
-		pwd = pwd[:32]
+	if len(key) > 32 {
+		key = key[:32]
 	}
 
-	for len(pwd) < 32 {
-		pwd += string(pwd[0])
+	for len(key) < 32 {
+		key += string(key[0])
 	}
 
-	return pwd
+	return key
 }

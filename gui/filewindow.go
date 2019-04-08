@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/p1gd0g/QiniuDrive/comm"
+	"github.com/p1gd0g/QiniuDrive/crypto"
 	"github.com/p1gd0g/ui"
 )
 
@@ -16,10 +17,10 @@ func FileWindow(
 	zone *ui.Combobox,
 	fileList *FileList) {
 
-	fileUp := ui.NewButton("upload")
-	fileDn := ui.NewButton("download")
-	fileDl := ui.NewButton("delete")
-	fileFc := ui.NewButton("fetch")
+	fileUp := ui.NewButton("Upload")
+	fileDn := ui.NewButton("Download")
+	fileDl := ui.NewButton("Delete")
+	fileFc := ui.NewButton("Fetch")
 
 	fileOpHBox := ui.NewHorizontalBox()
 	fileOpHBox.SetPadded(true)
@@ -28,18 +29,32 @@ func FileWindow(
 	fileOpHBox.Append(fileDl, true)
 	fileOpHBox.Append(fileFc, true)
 
+	enc := ui.NewButton("Encrypt")
+	dec := ui.NewButton("Decrypt")
+
+	keyEntry := ui.NewEntry()
+
+	cryptoHBox := ui.NewHorizontalBox()
+	cryptoHBox.SetPadded(true)
+	cryptoHBox.Append(enc, true)
+	cryptoHBox.Append(ui.NewLabel("or"), false)
+	cryptoHBox.Append(dec, true)
+	cryptoHBox.Append(ui.NewLabel("with key"), false)
+	cryptoHBox.Append(keyEntry, true)
+
 	fileBar := ui.NewProgressBar()
 	fileBar.Hide()
 	fileBar.SetValue(-1)
 
 	fileVBox := ui.NewVerticalBox()
 	fileVBox.SetPadded(true)
-	fileVBox.Append(ui.NewLabel("file info"), false)
+	fileVBox.Append(ui.NewLabel("File info"), false)
 	fileVBox.Append(ui.NewVerticalSeparator(), false)
 	fileVBox.Append(fileList.HBox, false)
 	fileVBox.Append(ui.NewHorizontalBox(), true)
 	fileVBox.Append(ui.NewVerticalSeparator(), false)
 	fileVBox.Append(fileOpHBox, false)
+	fileVBox.Append(cryptoHBox, false)
 	fileVBox.Append(fileBar, false)
 
 	fileWindow := ui.NewWindow("QiniuDrive", 600, 600, false)
@@ -51,6 +66,8 @@ func FileWindow(
 
 		file := ui.OpenFile(fileWindow)
 		if file == "" {
+			log.Println("Empty file.")
+
 			return
 		}
 		log.Println("File is", file)
@@ -147,7 +164,6 @@ func FileWindow(
 				}
 			}
 			log.Println("All selected files deleted.")
-
 		}()
 	})
 
@@ -162,7 +178,7 @@ func FileWindow(
 			log.Println("Bar shows.")
 
 			go func() {
-				err := comm.RemoteDownload(
+				err := comm.Fetch(
 					accessKey.Text(),
 					secretKey.Text(),
 					bucket.Text(),
@@ -171,7 +187,7 @@ func FileWindow(
 				if err != nil {
 					return
 				}
-				log.Println("Remote download successfully.")
+				log.Println("Fetch successfully.")
 
 				ui.QueueMain(func() {
 
@@ -188,6 +204,58 @@ func FileWindow(
 				})
 			}()
 		})
+	})
+
+	enc.OnClicked(func(*ui.Button) {
+		log.Println("Button clicked: Enc.")
+
+		file := ui.OpenFile(fileWindow)
+		if file == "" || keyEntry.Text() == "" {
+			log.Println("Empty file or key.")
+
+			return
+		}
+		log.Println("File is", file)
+
+		fileBar.Show()
+		log.Println("Bar shows.")
+
+		go func() {
+			err := crypto.Encrypt(keyEntry.Text(), file)
+			if err != nil {
+				ui.MsgBoxError(fileWindow, "Error!", err.Error())
+			}
+			log.Println("Encrypt successfully.")
+
+			fileBar.Hide()
+			log.Println("Bar hides.")
+		}()
+	})
+
+	dec.OnClicked(func(*ui.Button) {
+		log.Println("Button clicked: Dec.")
+
+		file := ui.OpenFile(fileWindow)
+		if file == "" || keyEntry.Text() == "" {
+			log.Println("Empty file or key.")
+
+			return
+		}
+		log.Println("File is", file)
+
+		fileBar.Show()
+		log.Println("Bar shows.")
+
+		go func() {
+			err := crypto.Decrypt(keyEntry.Text(), file)
+			if err != nil {
+				ui.MsgBoxError(fileWindow, "Error!", err.Error())
+			}
+			log.Println("Decrypt successfully.")
+
+			fileBar.Hide()
+			log.Println("Bar hides.")
+		}()
 	})
 
 	fileWindow.OnClosing(func(*ui.Window) bool {

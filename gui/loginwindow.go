@@ -41,11 +41,11 @@ func LoginWindow() {
 	loginForm.Append("domain", domain, false)
 	loginForm.Append("zone", zone, false)
 
-	loginGroup := ui.NewGroup("user info")
+	loginGroup := ui.NewGroup("User info")
 	loginGroup.SetMargined(true)
 	loginGroup.SetChild(loginForm)
 
-	loginButton := ui.NewButton("login")
+	loginButton := ui.NewButton("Login")
 
 	// There is a bug in Windows, cancel this bar temporarily.
 	// loginBar := ui.NewProgressBar()

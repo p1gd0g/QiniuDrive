@@ -8,8 +8,8 @@ import (
 	"github.com/qiniu/api.v7/storage"
 )
 
-// RemoteDownload fetches the url using qiniu's api.
-func RemoteDownload(
+// Fetch fetches the url using qiniu's api.
+func Fetch(
 	accessKey,
 	secretKey,
 	bucket,

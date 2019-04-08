@@ -13,7 +13,7 @@ func URLWindow() (
 	form.SetPadded(true)
 	form.Append("url", entry, true)
 
-	button = ui.NewButton("确认")
+	button = ui.NewButton("yes")
 
 	hBox := ui.NewHorizontalBox()
 	hBox.SetPadded(true)
