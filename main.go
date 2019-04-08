@@ -9,11 +9,12 @@ import (
 
 func main() {
 
-	flag.String("ak", "", "accessKey")
-	flag.String("sk", "", "secretKey")
-	flag.String("bk", "", "bucket")
-	flag.String("dm", "", "domain")
-	flag.Int("zn", 0, "zone")
+	flag.String("ak", "", "Your access key.")
+	flag.String("sk", "", "Your secret key.")
+	flag.String("bk", "", "Your bucket name.")
+	flag.String("dm", "", "Your domain name. Optional for Download.")
+	flag.Int("zn", 0, "Your bucket zone: "+
+		"1-Huadong, 2-Huabei, 3-Huanan, 4-Beimei. Optional for Upload.")
 
 	flag.Parse()
 

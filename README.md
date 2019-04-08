@@ -10,8 +10,25 @@ Download the [new release](https://github.com/p1gd0g/QiniuDrive/releases).
 |---|:---:|:---:|
 |Linux    |![loginWindow](/images/loginWindow_linux.png)|![fileWindow](/images/fileWindow_linux.png)|
 |Windows  |||
+|Mac OS X |I guess|it looks similar to Linux|
 
-To login more convieniently, excute the binary with flags in terminal, run `qiniudrive -h` to show more info. Or hardcode your user info.
+To login more convieniently, excute the binary with flags in terminal, run `qiniudrive -h` to show more info:
+
+```
+Usage of qiniudrive:
+  -ak string
+        Your access key.
+  -bk string
+        Your bucket name.
+  -dm string
+        Your domain name. Optional for Download.
+  -sk string
+        Your secret key.
+  -zn int
+        Your bucket zone: 1-Huadong, 2-Huabei, 3-Huanan, 4-Beimei. Optional for Upload.
+```
+
+Or hardcode your user info directly.
 
 ## Build
 
@@ -40,6 +57,6 @@ Note that [andlabs/ui](https://github.com/andlabs/ui) requires:
 ```
 
 
-## License
+### License
 
 This project is licensed under the terms of the MIT license.

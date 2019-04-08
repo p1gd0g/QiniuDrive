@@ -58,7 +58,7 @@ func LoginWindow() {
 	loginVBox.Append(loginButton, false)
 	// loginVBox.Append(loginBar, false)
 
-	loginWindow := ui.NewWindow("login", 200, 1, false)
+	loginWindow := ui.NewWindow("Login", 200, 1, false)
 	loginWindow.SetMargined(true)
 	loginWindow.SetChild(loginVBox)
 
