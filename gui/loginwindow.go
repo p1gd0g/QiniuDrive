@@ -28,7 +28,8 @@ func LoginWindow() {
 	domain := ui.NewEntry()
 	domain.SetText(dm)
 
-	zone := common.NewCombobox("华东", "华北", "华南", "北美")
+	zone := common.NewCombobox(
+		"Huadong", "Huabei", "Huanan", "Beimei")
 	zoneIndex, _ := strconv.Atoi(zn)
 	zone.SetSelected(zoneIndex)
 
@@ -40,11 +41,11 @@ func LoginWindow() {
 	loginForm.Append("domain", domain, false)
 	loginForm.Append("zone", zone, false)
 
-	loginGroup := ui.NewGroup("登录信息")
+	loginGroup := ui.NewGroup("user info")
 	loginGroup.SetMargined(true)
 	loginGroup.SetChild(loginForm)
 
-	loginButton := ui.NewButton("登录")
+	loginButton := ui.NewButton("login")
 
 	loginBar := ui.NewProgressBar()
 	loginBar.Hide()
@@ -56,7 +57,7 @@ func LoginWindow() {
 	loginVBox.Append(loginButton, false)
 	loginVBox.Append(loginBar, false)
 
-	loginWindow := ui.NewWindow("登录", 200, 1, false)
+	loginWindow := ui.NewWindow("login", 200, 1, false)
 	loginWindow.SetMargined(true)
 	loginWindow.SetChild(loginVBox)
 

@@ -9,7 +9,7 @@ import (
 	_ "github.com/andlabs/ui/winmanifest"
 )
 
-// Start starts the ui.
+// Start starts the gui.
 func Start() {
 	err := ui.Main(func() {
 

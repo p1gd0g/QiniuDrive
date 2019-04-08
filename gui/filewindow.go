@@ -16,17 +16,17 @@ func FileWindow(
 	zone *ui.Combobox,
 	fileList *FileList) {
 
-	fileUp := ui.NewButton("上传文件")
-	fileDn := ui.NewButton("下载文件")
-	fileDl := ui.NewButton("删除文件")
-	fileRd := ui.NewButton("离线下载")
+	fileUp := ui.NewButton("upload")
+	fileDn := ui.NewButton("download")
+	fileDl := ui.NewButton("delete")
+	fileFc := ui.NewButton("fetch")
 
 	fileOpHBox := ui.NewHorizontalBox()
 	fileOpHBox.SetPadded(true)
 	fileOpHBox.Append(fileUp, true)
 	fileOpHBox.Append(fileDn, true)
 	fileOpHBox.Append(fileDl, true)
-	fileOpHBox.Append(fileRd, true)
+	fileOpHBox.Append(fileFc, true)
 
 	fileBar := ui.NewProgressBar()
 	fileBar.Hide()
@@ -34,7 +34,7 @@ func FileWindow(
 
 	fileVBox := ui.NewVerticalBox()
 	fileVBox.SetPadded(true)
-	fileVBox.Append(ui.NewLabel("文件信息"), false)
+	fileVBox.Append(ui.NewLabel("file info"), false)
 	fileVBox.Append(ui.NewVerticalSeparator(), false)
 	log.Println("!!!")
 	fileVBox.Append(fileList.HBox, false)
@@ -153,8 +153,8 @@ func FileWindow(
 		}()
 	})
 
-	fileRd.OnClicked(func(*ui.Button) {
-		log.Println("Button clicked: Remote download.")
+	fileFc.OnClicked(func(*ui.Button) {
+		log.Println("Button clicked: Fetch.")
 
 		fileBar.Show()
 		log.Println("Bar shows.")
