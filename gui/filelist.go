@@ -69,6 +69,12 @@ func (l *FileList) Display(
 	l.CheckboxList = []*ui.Checkbox{}
 	log.Println("Lists cleared.")
 
+	// Fix the number of the list.
+	// TODO: clear this limit.
+	if len(list) > 30 {
+		list = list[:30]
+	}
+
 	for _, item := range list {
 		l.name.Append(ui.NewLabel(item.Key), true)
 		l.NameList = append(l.NameList, item.Key)

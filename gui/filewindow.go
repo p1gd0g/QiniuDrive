@@ -39,7 +39,7 @@ func FileWindow(
 	cryptoHBox.Append(enc, true)
 	cryptoHBox.Append(ui.NewLabel("or"), false)
 	cryptoHBox.Append(dec, true)
-	cryptoHBox.Append(ui.NewLabel("with key"), false)
+	cryptoHBox.Append(ui.NewLabel("a file with the key:"), false)
 	cryptoHBox.Append(keyEntry, true)
 
 	fileBar := ui.NewProgressBar()
@@ -54,6 +54,7 @@ func FileWindow(
 	fileVBox.Append(ui.NewHorizontalBox(), true)
 	fileVBox.Append(ui.NewVerticalSeparator(), false)
 	fileVBox.Append(fileOpHBox, false)
+	fileVBox.Append(ui.NewVerticalSeparator(), false)
 	fileVBox.Append(cryptoHBox, false)
 	fileVBox.Append(fileBar, false)
 
