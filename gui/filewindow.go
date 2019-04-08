@@ -58,7 +58,7 @@ func FileWindow(
 	fileVBox.Append(cryptoHBox, false)
 	fileVBox.Append(fileBar, false)
 
-	fileWindow := ui.NewWindow("QiniuDrive", 600, 600, false)
+	fileWindow := ui.NewWindow("Qiniu Drive v0.1", 600, 600, false)
 	fileWindow.SetMargined(true)
 	fileWindow.SetChild(fileVBox)
 
