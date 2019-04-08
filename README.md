@@ -9,7 +9,7 @@ Download the [new release](https://github.com/p1gd0g/QiniuDrive/releases).
 |Platform |Login  |File |
 |---|:---:|:---:|
 |Linux    |![loginWindow](/images/loginWindow_linux.png)|![fileWindow](/images/fileWindow_linux.png)|
-|Windows  |||
+|Windows  |![loginWindow](/images/loginWindow_windows.png)|![fileWindow](/images/fileWindow_windows.png)|
 |Mac OS X |I guess|it looks similar to Linux|
 
 To login more convieniently, excute the binary with flags in terminal, run `qiniudrive -h` to show more info:
