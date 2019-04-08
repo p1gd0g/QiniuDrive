@@ -47,22 +47,24 @@ func LoginWindow() {
 
 	loginButton := ui.NewButton("login")
 
-	loginBar := ui.NewProgressBar()
-	loginBar.Hide()
-	loginBar.SetValue(-1)
+	// There is a bug in Windows, cancel this bar temporarily.
+	// loginBar := ui.NewProgressBar()
+	// loginBar.Hide()
+	// loginBar.SetValue(-1)
 
 	loginVBox := ui.NewVerticalBox()
 	loginVBox.SetPadded(true)
 	loginVBox.Append(loginGroup, false)
 	loginVBox.Append(loginButton, false)
-	loginVBox.Append(loginBar, false)
+	// loginVBox.Append(loginBar, false)
 
 	loginWindow := ui.NewWindow("login", 200, 1, false)
 	loginWindow.SetMargined(true)
 	loginWindow.SetChild(loginVBox)
 
 	loginButton.OnClicked(func(*ui.Button) {
-		loginBar.Show()
+		// loginBar.Show()
+		loginButton.Disable()
 		log.Println("accessKey:", accessKey.Text())
 		log.Println("secretKey:", secretKey.Text())
 
@@ -73,12 +75,13 @@ func LoginWindow() {
 		// ui.QueueMain(func() {
 		if err != nil {
 			ui.MsgBoxError(loginWindow, "Error!", err.Error())
-			loginBar.Hide()
+			// loginBar.Hide()
+			loginButton.Enable()
 			return
 		}
 		log.Println("List files successfully.")
 
-		loginBar.Hide()
+		// loginBar.Hide()
 		log.Println("loginBar hided.")
 
 		loginWindow.Hide()
